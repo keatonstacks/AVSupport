@@ -10,7 +10,7 @@ The RMC4 is a compact and versatile control system. Here are some useful links f
 The CP4N is a powerful control system designed for larger installations. Below are some resources for CP4N:
 
 - [CP4N Product Page](https://www.crestron.com/Products/Control-Hardware-Software/Hardware/Control-Systems/CP4N)
-- [CP4N Documentation](https://www.crestron.com/Support/Resource-Library)
+- [CP4N Documentation](https://www.crestron.com/getmedia/d73a6ac3-e963-4caa-b093-64c69eabea20/mg_pi_rmc4)
 
 ## TS-1070
 The TS-1070 is a 10.1" touch screen for control and automation. Here are some helpful links:
