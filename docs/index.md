@@ -1,3 +1,8 @@
+---
+layout: default
+title: Audio Visual Support Documentation
+---
+
 # Audio Visual Support Documentation
 
 Welcome to my personal Audio Visual Support knowledge base.
