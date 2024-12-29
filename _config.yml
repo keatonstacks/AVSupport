@@ -1,7 +1,7 @@
 title: AVSupport Documentation
 description: Detailed information and resources for various AV products.
-theme: minima
+theme: jekyll-theme-cayman-blog
 
-# Enable dark mode if using the minima theme
-minima:
+# Enable dark mode
+cayman-blog:
   skin: dark
