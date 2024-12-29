@@ -6,8 +6,6 @@ Welcome to my personal Audio Visual Support knowledge base.
 
 Having worked in the industry for 10 years, I hope to help provide organized, quick access to comprehensive Audio Visual knowledge base articles I have used over the years to find success across various projects.
 
-### Contents
-
 ### Biamp Products
 - [Tesira](biamp/tesira.md)
 
