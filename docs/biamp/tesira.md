@@ -9,9 +9,8 @@ Tesira is a highly flexible and scalable audio and video networked media system.
 - [Tesira Software Downloads](https://www.biamp.com/downloads#tesira)
 - [Tesira Training Videos](https://www.biamp.com/training/tesira)
 
-## Tesira Resources
 <details>
-  <summary>Click to expand Tesira Resources</summary>
+  <summary>Tesira Resources</summary>
   <div markdown="1">
   
   - **User Manuals**: [Tesira User Manuals](https://support.biamp.com/Tesira/User_Manuals)
@@ -23,9 +22,8 @@ Tesira is a highly flexible and scalable audio and video networked media system.
   </div>
 </details>
 
-## AVB
 <details>
-  <summary>Click to expand AVB</summary>
+  <summary>AVB</summary>
   <div markdown="1">
   
   - AVB is an open standard for transporting audio and video over Ethernet.
@@ -46,9 +44,8 @@ Tesira is a highly flexible and scalable audio and video networked media system.
   </div>
 </details>
 
-## Dante
 <details>
-  <summary>Click to expand Dante</summary>
+  <summary>Dante</summary>
   <div markdown="1">
   
   - Dante is a proprietary networking technology developed by Audinate.
@@ -58,9 +55,8 @@ Tesira is a highly flexible and scalable audio and video networked media system.
   </div>
 </details>
 
-## Using Biamp Products with For the Record
 <details>
-  <summary>Click to expand Using Biamp Products with For the Record</summary>
+  <summary>Using Biamp Products with For the Record</summary>
   <div markdown="1">
   
   For the Record (FTR) is a digital recording solution used in courtrooms and other environments. Tesira integrates seamlessly with FTR:
@@ -71,9 +67,8 @@ Tesira is a highly flexible and scalable audio and video networked media system.
   </div>
 </details>
 
-## Multichannel USB Audio
 <details>
-  <summary>Click to expand Multichannel USB Audio</summary>
+  <summary>Multichannel USB Audio</summary>
   <div markdown="1">
   
   - Tesira devices can act as USB audio interfaces, providing multiple channels of audio to and from a computer.
@@ -85,9 +80,8 @@ Tesira is a highly flexible and scalable audio and video networked media system.
   </div>
 </details>
 
-## AVB on Cisco Switches
 <details>
-  <summary>Click to expand AVB on Cisco Switches</summary>
+  <summary>AVB on Cisco Switches</summary>
   <div markdown="1">
   
   - Cisco switches must be properly configured to support AVB.
@@ -97,9 +91,8 @@ Tesira is a highly flexible and scalable audio and video networked media system.
   </div>
 </details>
 
-## Additional Resources
 <details>
-  <summary>Click to expand Additional Resources</summary>
+  <summary>Additional Resources</summary>
   <div markdown="1">
   
   - **Specifying PoE Switches for Biamp Tesira Devices**: [Specifying PoE Switches](https://support.biamp.com/Tesira/Miscellaneous/Specifying_PoE_switches_for_Biamp_Tesira_devices)
