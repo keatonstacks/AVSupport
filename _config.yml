@@ -1,0 +1,7 @@
+title: AVSupport Documentation
+description: Detailed information and resources for various AV products.
+theme: minima
+
+# Enable dark mode if using the minima theme
+minima:
+  skin: dark

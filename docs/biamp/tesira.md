@@ -9,7 +9,9 @@ Tesira is a highly flexible and scalable audio and video networked media system.
 
 ## Tesira Resources
 - **User Manuals**: [Tesira User Manuals](https://support.biamp.com/Tesira/User_Manuals)
-- **Firmware Updates**: [Tesira Firmware](https://www.biamp.com/downloads#tesira)
+- **Software and Firmware**: [Tesira Software and Firmware](https://support.biamp.com/Tesira/Software-Firmware?gad_source=1&gclid=CjwKCAiAg8S7BhATEiwAO2-R6sqwuxbO5SRhYRXkUer20XDLWKr6nAgTJsrQvrATcOFDUx3_-CBduBoCl24QAvD_BwE)
+- **Tesira Firmware Update Instructions**: [Firmware Update Instructions](https://support.biamp.com/Tesira/Miscellaneous/Tesira_firmware_update_instructions)
+  - Detailed steps for updating Tesira firmware.
 - **Support Articles**: [Tesira Support](https://support.biamp.com/Tesira/Support_Articles)
 
 ## AVB vs. Dante
@@ -66,8 +68,6 @@ Biamp Tesira supports multichannel USB audio and AVB on Cisco switches. Here are
   - Overview and specifications of the TesiraFORTE X series.
 - **Upgrading Tesira Firmware to Version 3.8 - 3.11**: [Firmware Upgrade Guide](https://support.biamp.com/Tesira/Miscellaneous/Upgrading_Tesira_firmware_to_version_3.8_-_3.11)
   - Instructions for upgrading Tesira firmware to versions 3.8 through 3.11.
-- **Tesira Firmware Update Instructions**: [Firmware Update Instructions](https://support.biamp.com/Tesira/Miscellaneous/Tesira_firmware_update_instructions)
-  - Detailed steps for updating Tesira firmware.
 - **DTMF Tone Duration**: [DTMF Tone Duration](https://support.biamp.com/Tesira/Miscellaneous/DTMF_tone_duration)
   - Information on configuring DTMF tone duration in Tesira systems.
 - **Using the Tesira EX-UBT or EX-USB**: [Using the Tesira EX-UBT or EX-USB](https://support.biamp.com/Tesira/Control/Using_the_Tesira_EX-UBT_or_EX-USB)
@@ -78,7 +78,5 @@ Biamp Tesira supports multichannel USB audio and AVB on Cisco switches. Here are
   - This guide provides information on spanning subnets on the control network in Tesira.
 - **Multicast Traffic and IGMP**: [Multicast Traffic and IGMP](https://support.biamp.com/General/Networking/Multicast_traffic_and_IGMP)
   - This guide provides information on managing multicast traffic and IGMP in networked AV systems.
-- **Finding an Audia/Nexia's IP Address via the Ethernet Port**: [Finding IP Address](https://support.biamp.com/Audia-Nexia/Control/Finding_an_Audia-Nexias_IP_address_via_the_Ethernet_port)
-  - This guide provides instructions on finding the IP address of Audia/Nexia devices via the Ethernet port.
 - **Tesira Network Ports and Protocols**: [Network Ports and Protocols](https://support.biamp.com/Tesira/Control/Tesira_network_ports_and_protocols)
   - This guide provides information on the network ports and protocols used by Tesira devices.
