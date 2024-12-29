@@ -7,7 +7,7 @@ Welcome to my personal Audio Visual Support knowledge base.
 Having worked in the industry for 10 years, I hope to help provide organized, quick access to comprehensive Audio Visual knowledge base articles I have used over the years to find success across various projects.
 
 ### Biamp Products
-- [General Information](crestron/general-biamp.md)
+- [General Information](biamp/general-biamp.md)
 - [Tesira](biamp/tesira.md)
 
 ### Crestron Products
