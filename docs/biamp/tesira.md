@@ -42,13 +42,8 @@ Tesira supports both AVB (Audio Video Bridging) and Dante for audio networking. 
 ## Using Biamp Products with For the Record
 For the Record (FTR) is a digital recording solution used in courtrooms and other environments. Tesira integrates seamlessly with FTR:
 
-- **Integration Guide**: [Biamp and FTR Integration](https://support.biamp.com/Tesira/For_the_Record_Integration)
-- **Configuration Tips**: Ensure proper gain staging and routing within Tesira for optimal recording quality.
 - **Using Tesira USB Audio with For The Record**: [Using Tesira USB Audio with For The Record](https://support.biamp.com/Tesira/Miscellaneous/Using_Tesira_USB_audio_with_For_The_Record)
   - This guide provides detailed instructions on how to configure and use Tesira USB audio with For The Record systems.
-
-## Multichannel USB Audio and AVB on Cisco Switches
-Biamp Tesira supports multichannel USB audio and AVB on Cisco switches. Here are some important considerations:
 
 ### Multichannel USB Audio
 - Tesira devices can act as USB audio interfaces, providing multiple channels of audio to and from a computer.

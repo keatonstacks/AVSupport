@@ -1,7 +1,4 @@
----
-layout: default
-title: Audio Visual Support Documentation
----
+<link rel="stylesheet" href="styles.css">
 
 # Audio Visual Support Documentation
 
@@ -16,12 +13,9 @@ Having worked in the industry for 10 years, I hope to help provide organized, qu
 
 ### Crestron Products
 - [General Information](crestron/general.md)
-- [RMC4](crestron/rmc4.md)
-- [CP4N](crestron/cp4n.md)
 
 ### WyreStorm Products
 - [General Information](wyrestorm/general.md)
-- [NHD Products](wyrestorm/nhd.md)
 
 ## About
 

@@ -1,7 +1,0 @@
-title: AVSupport Documentation
-description: Detailed information and resources for various AV products.
-theme: jekyll-theme-cayman-blog
-
-# Enable dark mode
-cayman-blog:
-  skin: dark
