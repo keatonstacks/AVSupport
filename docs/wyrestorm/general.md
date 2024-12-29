@@ -1,8 +1,8 @@
 <link rel="stylesheet" href="../styles.css">
 
-# WyreStorm Products
+### WyreStorm Products
 
-## NHD Products
+### NHD Products
 WyreStorm's NetworkHD (NHD) products offer AV over IP solutions. Below are some resources for NHD products:
 
 - [NHD Product Page](https://www.wyrestorm.com/NetworkHD)

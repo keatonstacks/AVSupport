@@ -13,6 +13,8 @@ a:visited {
 
 h1, h2, h3, h4, h5, h6 {
     color: #ff4500; /* OrangeRed for headers */
+    border-bottom: 2px solid #ff4500; /* Red underline for headers */
+    padding-bottom: 0.3em; /* Add some space between the text and the underline */
 }
 
 nav, footer {

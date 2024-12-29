@@ -1,6 +1,6 @@
 <link rel="stylesheet" href="../styles.css">
 
-# Tesira
+### Tesira
 
 Tesira is a highly flexible and scalable audio and video networked media system. Below are some helpful resources and documentation links for Tesira products:
 
@@ -9,15 +9,12 @@ Tesira is a highly flexible and scalable audio and video networked media system.
 - [Tesira Software Downloads](https://www.biamp.com/downloads#tesira)
 - [Tesira Training Videos](https://www.biamp.com/training/tesira)
 
-## Tesira Resources
+### Tesira Resources
 - **User Manuals**: [Tesira User Manuals](https://support.biamp.com/Tesira/User_Manuals)
 - **Software and Firmware**: [Tesira Software and Firmware](https://support.biamp.com/Tesira/Software-Firmware?gad_source=1&gclid=CjwKCAiAg8S7BhATEiwAO2-R6sqwuxbO5SRhYRXkUer20XDLWKr6nAgTJsrQvrATcOFDUx3_-CBduBoCl24QAvD_BwE)
 - **Tesira Firmware Update Instructions**: [Firmware Update Instructions](https://support.biamp.com/Tesira/Miscellaneous/Tesira_firmware_update_instructions)
   - Detailed steps for updating Tesira firmware.
 - **Support Articles**: [Tesira Support](https://support.biamp.com/Tesira/Support_Articles)
-
-## AVB vs. Dante
-Tesira supports both AVB (Audio Video Bridging) and Dante for audio networking. Here are some key points and resources:
 
 ### AVB
 - AVB is an open standard for transporting audio and video over Ethernet.
@@ -39,7 +36,7 @@ Tesira supports both AVB (Audio Video Bridging) and Dante for audio networking. 
 - It is widely adopted and offers easy configuration and scalability.
 - [Dante Overview](https://support.biamp.com/General/Networking/Dante?gad_source=1&gclid=CjwKCAiAg8S7BhATEiwAO2-R6smKwIExLt7p74ZxT-YJtgUi4MxZ8daaYk3H73dllew4ktn1lgx8QxoCKtoQAvD_BwE)
 
-## Using Biamp Products with For the Record
+### Using Biamp Products with For the Record
 For the Record (FTR) is a digital recording solution used in courtrooms and other environments. Tesira integrates seamlessly with FTR:
 
 - **Using Tesira USB Audio with For The Record**: [Using Tesira USB Audio with For The Record](https://support.biamp.com/Tesira/Miscellaneous/Using_Tesira_USB_audio_with_For_The_Record)
@@ -59,7 +56,7 @@ For the Record (FTR) is a digital recording solution used in courtrooms and othe
 - Key settings include enabling AVB features, configuring VLANs, and ensuring proper QoS settings.
 - [AVB Configuration on Cisco Switches](https://support.biamp.com/Tesira/AVB/Enabling_AVB_on_Cisco_Catalyst_Switches)
 
-## Additional Resources
+### Additional Resources
 - **Specifying PoE Switches for Biamp Tesira Devices**: [Specifying PoE Switches](https://support.biamp.com/Tesira/Miscellaneous/Specifying_PoE_switches_for_Biamp_Tesira_devices)
   - This guide provides information on selecting and configuring PoE switches for use with Tesira devices.
 - **TesiraFORTE X**: [TesiraFORTE X](https://support.biamp.com/Tesira/Miscellaneous/TesiraFORTE_X)
