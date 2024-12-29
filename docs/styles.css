@@ -17,6 +17,12 @@ h1, h2, h3, h4, h5, h6 {
     padding-bottom: 0.3em; /* Add some space between the text and the underline */
 }
 
+summary {
+    color: #ff4500; /* Red for summary text */
+    font-size: 1.2em; /* Larger text size for summary */
+    cursor: pointer; /* Pointer cursor to indicate it's clickable */
+}
+
 nav, footer {
     background-color: #1e1e1e;
     color: #ffffff;
