@@ -20,12 +20,13 @@ Tesira is a highly flexible and scalable audio and video networked media system.
 - AVB is an open standard for transporting audio and video over Ethernet.
 - Multiple Tesira units can be connected using AVB, enabling scalable and flexible system designs.
 - [AVB Overview](https://support.biamp.com/Tesira/AVB)
-- **TC5 and TC5D**:
-  - [TC5 and TC5D Overview](https://support.biamp.com/Tesira/AVB/TC5_and_TC5D)
+- **TC5 and TC5D - 5-port AVB-capable PoE+ network device**:
+  - [TC5 Overview](https://support.biamp.com/Tesira/AVB/TesiraCONNECT_TC-5)
+  - [TC5D Overview](https://support.biamp.com/Tesira/AVB/TesiraCONNECT_TC-5D)
 - **Separated vs. Converged Networks**:
-  - [Separated vs. Converged Networks](https://support.biamp.com/Tesira/AVB/Separated_vs_Converged_Networks)
-- **Netgear M4250 Configuration**:
-  - [Netgear M4250 Configuration Guide](https://support.biamp.com/Tesira/AVB/Netgear_M4250_Configuration)
+  - [Separated vs. Converged Networks](https://support.biamp.com/Tesira/AVB/Separated_or_converged_Control_and_AVB_networks)
+- **Netgear M4250 AVB Configuration**:
+  - [Netgear M4250 AVB Configuration Guide](https://support.biamp.com/Tesira/AVB/Netgear_M4250_-_Enabling_AVB_using_the_AV_user_interface)
 - **List of AVB-capable Ethernet Switches**:
   - [AVB-capable Ethernet Switches](https://support.biamp.com/Tesira/AVB/List_of_AVB-capable_Ethernet_switches)
 - **Using Riedel AVB Manager to Synchronize a Tesira System to a 3rd Party AVB Device**:
