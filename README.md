@@ -1,3 +1,5 @@
-# AVSupport Documentation
+# Audio Visual Support Documentation - Keaton Stacks - 12-29-24
 
-Welcome to the AVSupport documentation site. Here you will find detailed information and resources for various AV products.
+Welcome my personal Audio Visual Support knowledge base. 
+
+Having worked in the industry for 10 years, I hope to help provide organized quick access to comprehensive Audio Visual knowledge base arcticles I have used over the years to find success across various projects.
