@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="../styles.css">
+
 # General Information about Biamp
 
 Biamp is a leading provider of professional audio and video solutions for various applications, including conferencing, public address, and sound reinforcement. Biamp products are known for their high quality, reliability, and ease of use.
@@ -49,17 +51,9 @@ Canvas is Biamp's control software that provides a customizable interface for ma
 ## Key Features of Biamp Products
 
 - **Scalability**: Biamp systems can be easily scaled to accommodate installations of any size, from small conference rooms to large stadiums.
-- **Networked Audio and Video**: Biamp products support AVB/TSN and Dante networking protocols for seamless integration and distribution of audio and video signals.
+- **Networked Audio and Video**: Biamp products support AVB and Dante networking protocols for seamless integration and distribution of audio and video signals.
 - **Ease of Use**: Biamp's intuitive software and user-friendly interfaces make it easy to configure and manage their systems.
 - **Reliability**: Biamp products are known for their durability and dependability, ensuring consistent performance in critical applications.
-
-## Applications of Biamp Products
-
-- **Corporate Conferencing**: Biamp solutions provide high-quality audio and video for conference rooms, boardrooms, and huddle spaces.
-- **Education**: Biamp products enhance the learning experience by providing clear audio and video for classrooms, lecture halls, and auditoriums.
-- **Healthcare**: Biamp systems are used in hospitals and medical facilities for paging, public address, and conferencing applications.
-- **Hospitality**: Biamp solutions are ideal for hotels, convention centers, and event spaces, providing high-quality audio and video for meetings and events.
-- **Transportation**: Biamp products are used in airports, train stations, and other transportation hubs for public address and voice evacuation systems.
 
 ## Conclusion
 
