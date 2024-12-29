@@ -1,4 +1,9 @@
 <!-- filepath: docs/biamp/tesira.md -->
+---
+layout: default
+title: Tesira
+---
+
 <link rel="stylesheet" href="../styles.css">
 
 # Tesira
