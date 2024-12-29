@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="styles.css">
+
 # Tesira
 
 Tesira is a highly flexible and scalable audio and video networked media system. Below are some helpful resources and documentation links for Tesira products:
@@ -19,8 +21,6 @@ Tesira supports both AVB (Audio Video Bridging) and Dante for audio networking. 
 
 ### AVB
 - AVB is an open standard for transporting audio and video over Ethernet.
-- It provides guaranteed bandwidth and low latency.
-- AVB allows for the expansion of systems by linking multiple units together over the network.
 - Multiple Tesira units can be connected using AVB, enabling scalable and flexible system designs.
 - [AVB Overview](https://support.biamp.com/Tesira/AVB)
 - **TC5 and TC5D**:
@@ -51,6 +51,9 @@ For the Record (FTR) is a digital recording solution used in courtrooms and othe
 - [USB Audio Configuration](https://support.biamp.com/Tesira/USB_Audio_Configuration)
 - [TesiraFORTE USB Interface](https://support.biamp.com/Tesira/Control/TesiraFORTE_USB_interface)
 
+- **Using the Tesira EX-UBT or EX-USB**: [Using the Tesira EX-UBT or EX-USB](https://support.biamp.com/Tesira/Control/Using_the_Tesira_EX-UBT_or_EX-USB)
+  - This guide provides instructions on how to use the Tesira EX-UBT or EX-USB for audio and control applications.
+
 ### AVB on Cisco Switches
 - Cisco switches must be properly configured to support AVB.
 - Key settings include enabling AVB features, configuring VLANs, and ensuring proper QoS settings.
@@ -65,8 +68,6 @@ For the Record (FTR) is a digital recording solution used in courtrooms and othe
   - Instructions for upgrading Tesira firmware to versions 3.8 through 3.11.
 - **DTMF Tone Duration**: [DTMF Tone Duration](https://support.biamp.com/Tesira/Miscellaneous/DTMF_tone_duration)
   - Information on configuring DTMF tone duration in Tesira systems.
-- **Using the Tesira EX-UBT or EX-USB**: [Using the Tesira EX-UBT or EX-USB](https://support.biamp.com/Tesira/Control/Using_the_Tesira_EX-UBT_or_EX-USB)
-  - This guide provides instructions on how to use the Tesira EX-UBT or EX-USB for audio and control applications.
 - **Single Network Connection Option in Tesira**: [Single Network Connection](https://support.biamp.com/Tesira/Control/Single_Network_Connection_option_in_Tesira)
   - This guide provides information on using the single network connection option in Tesira.
 - **Spanning Subnets on the Control Network**: [Spanning Subnets](https://support.biamp.com/Tesira/Control/Spanning_subnets_on_the_control_network)
