@@ -4,11 +4,15 @@ body {
 }
 
 a {
-    color: #bb86fc;
+    color: #1e90ff; /* DodgerBlue for links */
+}
+
+a:visited {
+    color: #1e90ff; /* Ensure visited links are the same color */
 }
 
 h1, h2, h3, h4, h5, h6 {
-    color: #ffffff;
+    color: #ff4500; /* OrangeRed for headers */
 }
 
 nav, footer {
