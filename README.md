@@ -6,10 +6,10 @@ Having worked in the industry for 10 years, I hope to help provide organized, qu
 
 ## Contents
 
-- [Biamp Products](docs/biamp/tesira.md)
+- [Biamp Products](docs/biamp/general-biamp.md)
   - [Tesira](docs/biamp/tesira.md)
-- [Crestron Products](docs/crestron/general.md)
-- [WyreStorm Products](docs/wyrestorm/general.md)
+- [Crestron Products](docs/crestron/general-crestron.md)
+- [WyreStorm Products](docs/wyrestorm/general-wyre.md)
 
 ## About
 
