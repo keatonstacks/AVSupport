@@ -1,5 +1,5 @@
 <link rel="stylesheet" href="../styles.css">
-<input type="text" id="searchBar" placeholder="Search Knowledge Base..." oninput="searchResources()" style="width: 30%; padding: 10px; margin-bottom: 20px">
+<input type="text" id="searchBar" placeholder="Search Knowledge Base..." oninput="searchResources()" style="width: 60%; padding: 10px; margin-bottom: 20px">
 # Tesira
 
 <details data-tags="tesira manuals software firmware support">

@@ -110,11 +110,37 @@ nav, footer {
     }
 }
 
+details {
+    margin-bottom: 1em; /* Add margin to the bottom of details */
+    background: transparent; /* Remove white background */
+    border: none; /* Remove borders */
+    padding: 0; /* Reset padding */
+    box-shadow: none; /* Remove shadowing */
+}
+
+details[open] summary {
+    background: transparent; /* Ensure no background when expanded */
+    border: none; /* Remove borders */
+}
+
+/* Ensure highlight works in both collapsed and expanded states */
 .highlight summary {
-    font-weight: bold;
-    color: #ffffff; /* Match the theme's text color */
-    background-color: rgba(255, 69, 0, 0.2); /* Subtle highlight with OrangeRed */
-    border-left: 4px solid #ff4500; /* Match your headers' underline color */
-    padding-left: 10px; /* More spacing for better readability */
+    font-weight: normal; /* Retain the original font weight */
+    color: #ff4500; /* Retain the original text color */
+    background-color: rgba(255, 69, 0, 0.2); /* Subtle background highlight */
+    border-left: 4px solid #ff4500; /* OrangeRed border for emphasis */
+    padding-left: 10px; /* Align with theme spacing */
     transition: background-color 0.3s ease, border-left 0.3s ease;
+}
+
+details[open].highlight summary {
+    background-color: rgba(255, 69, 0, 0.2); /* Keep highlight when expanded */
+    border-left: 4px solid #ff4500; /* Ensure border is consistent */
+}
+
+/* Ensure no extra background or shadows for the details */
+.highlight {
+    background: none !important; /* Ensure no overriding background */
+    box-shadow: none; /* Remove any box shadow on highlight */
+    border: none; /* Remove any border */
 }
