@@ -1,5 +1,6 @@
 body {
-    background-color: #121212;
+    background: url('images/alex-grey-art.png') no-repeat center center fixed; /* Set the background image */
+    background-size: cover; /* Ensure the image covers the entire background */
     color: #ffffff;
     font-family: Arial, sans-serif; /* Use a more readable font */
     line-height: 1.6; /* Improve line spacing */
@@ -52,6 +53,41 @@ pre {
     padding: 1em; /* Add padding to preformatted text */
     border-radius: 4px; /* Rounded corners for preformatted text */
     overflow-x: auto; /* Enable horizontal scrolling */
+}
+
+ul, ol {
+    padding-left: 20px; /* Add padding to the left of lists */
+    margin-bottom: 1em; /* Add margin to the bottom of lists */
+}
+
+li {
+    margin-bottom: 0.5em; /* Add margin to the bottom of list items */
+}
+
+table {
+    width: 100%; /* Make tables take up the full width */
+    border-collapse: collapse; /* Collapse borders */
+    margin-bottom: 1em; /* Add margin to the bottom of tables */
+}
+
+th, td {
+    border: 1px solid #ffffff; /* Add border to table cells */
+    padding: 0.5em; /* Add padding to table cells */
+    text-align: left; /* Align text to the left */
+}
+
+blockquote {
+    border-left: 4px solid #ff4500; /* Add left border to blockquotes */
+    padding-left: 1em; /* Add padding to the left of blockquotes */
+    margin-left: 0; /* Remove left margin */
+    color: #cccccc; /* Lighten the text color */
+}
+
+img {
+    max-width: 100%; /* Make images responsive */
+    height: auto; /* Maintain aspect ratio */
+    display: block; /* Remove bottom margin */
+    margin: 1em 0; /* Add margin to the top and bottom */
 }
 
 nav, footer {

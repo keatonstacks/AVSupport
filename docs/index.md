@@ -18,5 +18,5 @@ Having worked in the industry for 10 years, I hope to help provide organized, qu
 
 ### About
 
-**Author**: Keaton Stacks  
+**Author**: Keaton Stacks
 **Date**: December 29, 2024
