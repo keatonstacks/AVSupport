@@ -2,13 +2,6 @@
 
 # Tesira
 
-Tesira is a highly flexible and scalable audio and video networked media system. Below are some helpful resources and documentation links for Tesira products:
-
-- [Tesira Product Page](https://www.biamp.com/products/tesira)
-- [Tesira Documentation](https://support.biamp.com/Tesira)
-- [Tesira Software Downloads](https://www.biamp.com/downloads#tesira)
-- [Tesira Training Videos](https://www.biamp.com/training/tesira)
-
 <details>
   <summary>Tesira Resources</summary>
   <div markdown="1">
@@ -28,7 +21,8 @@ Tesira is a highly flexible and scalable audio and video networked media system.
   
   - AVB is an open standard for transporting audio and video over Ethernet.
   - Multiple Tesira units can be connected using AVB, enabling scalable and flexible system designs.
-  - [AVB Overview](https://support.biamp.com/Tesira/AVB)
+  - **AVB Overview**: [AVB Overview](https://support.biamp.com/Tesira/AVB)
+
   - **TC5 and TC5D - 5-port AVB-capable PoE+ network device**:
     - [TC5 Overview](https://support.biamp.com/Tesira/AVB/TesiraCONNECT_TC-5)
     - [TC5D Overview](https://support.biamp.com/Tesira/AVB/TesiraCONNECT_TC-5D)
@@ -40,7 +34,8 @@ Tesira is a highly flexible and scalable audio and video networked media system.
     - [AVB-capable Ethernet Switches](https://support.biamp.com/Tesira/AVB/List_of_AVB-capable_Ethernet_switches)
   - **Using Riedel AVB Manager to Synchronize a Tesira System to a 3rd Party AVB Device**:
     - [Riedel AVB Manager Guide](https://support.biamp.com/Tesira/AVB/Using_Riedel_AVB_Manager_to_synchronize_a_Tesira_system_to_a_3rd_party_AVB_device)
-
+  - **AVB Configuration on Cisco Switches**:
+    - [AVB Configuration on Cisco Switches](https://support.biamp.com/Tesira/AVB/Enabling_AVB_on_Cisco_Catalyst_Switches)
   </div>
 </details>
 
@@ -56,35 +51,17 @@ Tesira is a highly flexible and scalable audio and video networked media system.
 </details>
 
 <details>
-  <summary>Using Biamp Products with For the Record</summary>
+  <summary>Mutlichannel USB Audio and Recording</summary>
   <div markdown="1">
-  
+
+  Tesira devices can act as USB audio interfaces, providing multiple channels of audio to and from a computer.
+    - Not all USB extenders are supported for multichannel audio. It is important to verify compatibility.
+  - **Tesira USB Interface**: [TesiraFORTE USB Interface](https://support.biamp.com/Tesira/Control/TesiraFORTE_USB_interface)
+
   For the Record (FTR) is a digital recording solution used in courtrooms and other environments. Tesira integrates seamlessly with FTR:
   
   - **Using Tesira USB Audio with For The Record**: [Using Tesira USB Audio with For The Record](https://support.biamp.com/Tesira/Miscellaneous/Using_Tesira_USB_audio_with_For_The_Record)
     - This guide provides detailed instructions on how to configure and use Tesira USB audio with For The Record systems.
-
-  </div>
-</details>
-
-<details>
-  <summary>Multichannel USB Audio</summary>
-  <div markdown="1">
-  
-  - Tesira devices can act as USB audio interfaces, providing multiple channels of audio to and from a computer.
-  - Not all USB extenders are supported for multichannel audio. It is important to verify compatibility.
-  - [TesiraFORTE USB Interface](https://support.biamp.com/Tesira/Control/TesiraFORTE_USB_interface)
-
-  </div>
-</details>
-
-<details>
-  <summary>AVB on Cisco Switches</summary>
-  <div markdown="1">
-  
-  - Cisco switches must be properly configured to support AVB.
-  - Key settings include enabling AVB features, configuring VLANs, and ensuring proper QoS settings.
-  - [AVB Configuration on Cisco Switches](https://support.biamp.com/Tesira/AVB/Enabling_AVB_on_Cisco_Catalyst_Switches)
 
   </div>
 </details>
