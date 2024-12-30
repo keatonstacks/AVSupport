@@ -1,7 +1,7 @@
 let webamp = null;
 let isWebampVisible = localStorage.getItem('isWebampVisible') === 'true';  // Retrieve Webamp visibility state from local storage
 
-function toggleWinamp() {
+function initializeWebamp() {
   const app = document.getElementById("app");
 
   if (!webamp) {
@@ -41,29 +41,34 @@ function toggleWinamp() {
             artist: "Pretty Lights",
             title: "Sunshine Coming Through",
           },
-          url: "media/SunshineComeingThroughWoutro.mp3",
+          url: "media/SunshineComingThroughWoutro.mp3",
         },
       ],
     });
     webamp.renderWhenReady(app);
+  }
+}
+
+function toggleWinamp() {
+  if (!webamp) {
+    initializeWebamp();
+  }
+
+  if (isWebampVisible) {
+    webamp.close();
+    isWebampVisible = false;
+    localStorage.setItem('isWebampVisible', 'false');  // Save Webamp visibility state to local storage
+  } else {
+    webamp.reopen();
     isWebampVisible = true;
     localStorage.setItem('isWebampVisible', 'true');  // Save Webamp visibility state to local storage
-  } else {
-    if (isWebampVisible) {
-      webamp.close();
-      isWebampVisible = false;
-      localStorage.setItem('isWebampVisible', 'false');  // Save Webamp visibility state to local storage
-    } else {
-      webamp.reopen();
-      isWebampVisible = true;
-      localStorage.setItem('isWebampVisible', 'true');  // Save Webamp visibility state to local storage
-    }
   }
 }
 
 // Automatically reopen Webamp if it was visible
 window.addEventListener('load', () => {
   if (isWebampVisible) {
-    toggleWinamp();
+    initializeWebamp();
+    webamp.reopen();
   }
 });
