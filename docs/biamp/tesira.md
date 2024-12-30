@@ -1,8 +1,8 @@
 <link rel="stylesheet" href="../styles.css">
-
+<input type="text" id="searchBar" placeholder="Search Knowledge Base..." oninput="searchResources()" style="width: 30%; padding: 10px; margin-bottom: 20px">
 # Tesira
 
-<details>
+<details data-tags="tesira manuals software firmware support">
   <summary>Tesira Resources</summary>
   <div markdown="1">
   
@@ -15,7 +15,7 @@
   </div>
 </details>
 
-<details>
+<details data-tags="avb tesira network configuration tc5 tc5d netgear cisco riedel">
   <summary>AVB</summary>
   <div markdown="1">
   
@@ -39,7 +39,7 @@
   </div>
 </details>
 
-<details>
+<details data-tags="dante">
   <summary>Dante</summary>
   <div markdown="1">
   
@@ -50,7 +50,7 @@
   </div>
 </details>
 
-<details>
+<details data-tags="mutlichannel usb ftr recording">
   <summary>Mutlichannel USB Audio and Recording</summary>
   <div markdown="1">
 
@@ -66,7 +66,7 @@
   </div>
 </details>
 
-<details>
+<details data-tags="switch poe firmware dtmf">
   <summary>Additional Resources</summary>
   <div markdown="1">
   
@@ -80,3 +80,23 @@
 
   </div>
 </details>
+
+<script>
+  function searchResources() {
+    const query = document.getElementById('searchBar').value.toLowerCase();
+    const details = document.querySelectorAll('details');
+    
+    details.forEach(detail => {
+      const tags = detail.getAttribute('data-tags').toLowerCase();
+      if (tags.includes(query)) {
+        detail.style.display = 'block';
+        detail.open = true; // Automatically expand matching sections
+        detail.classList.add('highlight'); // Highlight matching sections
+      } else {
+        detail.style.display = 'none';
+        detail.open = false;
+        detail.classList.remove('highlight'); // Remove highlight class
+      }
+    });
+  }
+</script>
