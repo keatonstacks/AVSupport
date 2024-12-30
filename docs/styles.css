@@ -4,7 +4,7 @@ body {
     background: url('images/DarkFlower.jpg') no-repeat center center fixed; /* Set the background image */
     background-size: cover; /* Ensure the image covers the entire background */
     color: #ffffff;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Montserrat', sans-serif; /* Use Montserrat font */
     line-height: 1.6; /* Improve line spacing */
     margin: 0;
     padding: 0 20px; /* Add padding to the body */
@@ -14,6 +14,7 @@ body {
 a {
     color: #1e90ff; /* DodgerBlue for links */
     text-decoration: none; /* Remove underline from links */
+    font-family: 'Montserrat', sans-serif; /* Use Montserrat font */
 }
 
 a:visited {
@@ -30,7 +31,7 @@ h1, h2, h3, h4, h5, h6 {
     border-bottom: 2px solid #ff4500; /* Red underline for headers */
     padding-bottom: 0.3em; /* Add some space between the text and the underline */
     margin-top: 1em; /* Add margin to the top of headers */
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Montserrat', sans-serif; /* Use Montserrat font for headers */
     font-weight: 700; /* Use bold weight for headers */
 }
 
@@ -39,10 +40,12 @@ summary {
     font-size: 1.2em; /* Larger text size for summary */
     cursor: pointer; /* Pointer cursor to indicate it's clickable */
     margin-bottom: 0.5em; /* Add margin to the bottom of summary */
+    font-family: 'Montserrat', sans-serif; /* Use Montserrat font */
 }
 
 details {
     margin-bottom: 1em; /* Add margin to the bottom of details */
+    font-family: 'Montserrat', sans-serif; /* Use Montserrat font */
 }
 
 code {
@@ -50,6 +53,7 @@ code {
     color: #ffffff; /* White text for code blocks */
     padding: 0.2em 0.4em; /* Add padding to code blocks */
     border-radius: 4px; /* Rounded corners for code blocks */
+    font-family: 'Montserrat', sans-serif; /* Use Montserrat font */
 }
 
 pre {
@@ -58,15 +62,18 @@ pre {
     padding: 1em; /* Add padding to preformatted text */
     border-radius: 4px; /* Rounded corners for preformatted text */
     overflow-x: auto; /* Enable horizontal scrolling */
+    font-family: 'Montserrat', sans-serif; /* Use Montserrat font */
 }
 
 ul, ol {
     padding-left: 20px; /* Add padding to the left of lists */
     margin-bottom: 1em; /* Add margin to the bottom of lists */
+    font-family: 'Montserrat', sans-serif; /* Use Montserrat font */
 }
 
 li {
     margin-bottom: 0.5em; /* Add margin to the bottom of list items */
+    font-family: 'Montserrat', sans-serif; /* Use Montserrat font */
 }
 
 img {
@@ -81,6 +88,7 @@ nav, footer {
     color: #ffffff;
     padding: 1em; /* Add padding to nav and footer */
     margin-top: 1em; /* Add margin to the top of nav and footer */
+    font-family: 'Montserrat', sans-serif; /* Use Montserrat font */
 }
 
 /* Responsive design for mobile devices */
@@ -101,6 +109,7 @@ details {
     border: none; /* Remove borders */
     padding: 0; /* Reset padding */
     box-shadow: none; /* Remove shadowing */
+    font-family: 'Montserrat', sans-serif; /* Use Montserrat font */
 }
 
 details[open] summary {
@@ -116,6 +125,7 @@ details[open] summary {
     border-left: 4px solid #ff4500; /* OrangeRed border for emphasis */
     padding-left: 10px; /* Align with theme spacing */
     transition: background-color 0.3s ease, border-left 0.3s ease;
+    font-family: 'Montserrat', sans-serif; /* Use Montserrat font */
 }
 
 details[open].highlight summary {
@@ -128,4 +138,5 @@ details[open].highlight summary {
     background: none !important; /* Ensure no overriding background */
     box-shadow: none; /* Remove any box shadow on highlight */
     border: none; /* Remove any border */
+    font-family: 'Montserrat', sans-serif; /* Use Montserrat font */
 }
