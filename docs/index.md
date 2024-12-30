@@ -126,4 +126,16 @@ Having worked in the industry for 10 years, I hope to help provide organized, qu
       isWebampVisible = true;  // Set visibility to true after re-rendering
     }
   }
+
+  // Add error handling to check if tracks are loaded correctly
+  window.addEventListener('error', function(event) {
+    console.error('Error loading track:', event);
+  });
+
+  // Add event listener for Webamp errors
+  if (webamp) {
+    webamp.on('error', function(error) {
+      console.error('Webamp error:', error);
+    });
+  }
 </script>

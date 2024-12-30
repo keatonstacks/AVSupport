@@ -6,7 +6,7 @@ body {
     line-height: 1.6; /* Improve line spacing */
     margin: 0;
     padding: 0 20px; /* Add padding to the body */
-    margin-right: 390px; /* Add margin to the left of the body */
+    margin-right: 390px; /* Add margin to the right of the body */
 }
 
 a {
@@ -96,4 +96,16 @@ nav, footer {
     color: #ffffff;
     padding: 1em; /* Add padding to nav and footer */
     margin-top: 1em; /* Add margin to the top of nav and footer */
+}
+
+/* Responsive design for mobile devices */
+@media (max-width: 768px) {
+    body {
+        padding: 10px; /* Reduce padding on mobile devices */
+        margin-right: 20px; /* Reduce margin on mobile devices */
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        font-size: 1.2em; /* Adjust font size for headers on mobile */
+    }
 }
