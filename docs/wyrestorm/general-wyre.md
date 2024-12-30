@@ -1,7 +1,5 @@
 <link rel="stylesheet" href="../styles.css">
 <script src="../search.js"></script>
-<script src="https://unpkg.com/webamp"></script>
-<script src="../webamp.js"></script>
 <input type="text" id="searchBar" placeholder="Search Knowledge Base..." oninput="searchResources()" style="width: 60%; padding: 10px; margin-bottom: 20px">
 
 # WyreStorm Products

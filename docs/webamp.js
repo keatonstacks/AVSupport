@@ -1,7 +1,7 @@
 let webamp = null;
-let isWebampVisible = localStorage.getItem('isWebampVisible') === 'true';  // Retrieve Webamp visibility state from local storage
+let isWebampVisible = false;  // Track Webamp visibility state
 
-function initializeWebamp() {
+function toggleWinamp() {
   const app = document.getElementById("app");
 
   if (!webamp) {
@@ -45,49 +45,15 @@ function initializeWebamp() {
         },
       ],
     });
-
-    webamp.onClose(() => {
-      isWebampVisible = false;
-      localStorage.setItem('isWebampVisible', 'false');  // Save Webamp visibility state to local storage
-    });
-
-    webamp.onTrackDidChange((track) => {
-      const currentTrack = webamp.getMedia().getCurrentTrack();
-      const currentTime = webamp.getMedia().getCurrentTime();
-      sessionStorage.setItem('currentTrack', JSON.stringify(currentTrack));
-      sessionStorage.setItem('currentTime', currentTime);
-    });
-
     webamp.renderWhenReady(app);
-  }
-}
-
-function toggleWinamp() {
-  if (!webamp) {
-    initializeWebamp();
-  }
-
-  if (isWebampVisible) {
-    webamp.close();
-  } else {
-    webamp.reopen();
     isWebampVisible = true;
-    localStorage.setItem('isWebampVisible', 'true');  // Save Webamp visibility state to local storage
-  }
-}
-
-// Automatically reopen Webamp if it was visible
-window.addEventListener('load', () => {
-  if (isWebampVisible) {
-    initializeWebamp();
-    webamp.reopen();
-
-    const currentTrack = JSON.parse(sessionStorage.getItem('currentTrack'));
-    const currentTime = sessionStorage.getItem('currentTime');
-
-    if (currentTrack && currentTime) {
-      webamp.getMedia().setCurrentTrack(currentTrack);
-      webamp.getMedia().seekToTime(currentTime);
+  } else {
+    if (isWebampVisible) {
+      webamp.close();
+      isWebampVisible = false;
+    } else {
+      webamp.reopen();
+      isWebampVisible = true;
     }
   }
-});
+}

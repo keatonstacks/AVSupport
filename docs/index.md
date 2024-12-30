@@ -12,8 +12,8 @@ Having worked in the industry for 10 years, I hope to help provide organized, qu
   <summary>Biamp Products</summary>
   <div markdown="1">
   
-  - [General Information](biamp/general-biamp.md)
-  - [Tesira](biamp/tesira.md)
+  - [General Information](biamp/general-biamp.md){:target="_blank"}
+  - [Tesira](biamp/tesira.md){:target="_blank"}
 
   </div>
 </details>
@@ -22,7 +22,7 @@ Having worked in the industry for 10 years, I hope to help provide organized, qu
   <summary>Crestron Products</summary>
   <div markdown="1">
   
-  - [General Information](crestron/general-crestron.md)
+  - [General Information](crestron/general-crestron.md){:target="_blank"}
 
   </div>
 </details>
@@ -31,7 +31,7 @@ Having worked in the industry for 10 years, I hope to help provide organized, qu
   <summary>WyreStorm Products</summary>
   <div markdown="1">
   
-  - [General Information](wyrestorm/general-wyre.md)
+  - [General Information](wyrestorm/general-wyre.md){:target="_blank"}
 
   </div>
 </details>
