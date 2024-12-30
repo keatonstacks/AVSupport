@@ -4,63 +4,38 @@
 
 WyreStorm is a leading provider of AV over IP solutions, offering a range of products designed for high-quality audio and video distribution over network infrastructures. WyreStorm's NetworkHD (NHD) product line provides flexible and scalable AV over IP solutions for various applications.
 
-## NHD Products
+### NHD Products
+General NHD Technical Reference Guide
+- **NHD Technical Reference Guide**: [NHD Technical Reference Guide](https://wyrestorm0.sharepoint.com/PartnerResources/Shared%20Documents/Forms/AllItems.aspx?id=%2FPartnerResources%2FShared%20Documents%2FWyreStorm%20Resources%2FProducts%2FNetworkHD%2FNetworkHD%20100%2D200%2D400%2D500%2D600%2DCTL%2FDocumentation%2FConfiguration%20Guides%2FNetworkHD%5FTechnicalReferenceGuide%5Fv6%2E8%2Epdf&parent=%2FPartnerResources%2FShared%20Documents%2FWyreStorm%20Resources%2FProducts%2FNetworkHD%2FNetworkHD%20100%2D200%2D400%2D500%2D600%2DCTL%2FDocumentation%2FConfiguration%20Guides&p=true&ga=1)
+
+- **NHD Certified Network Switches and Configuration Guides**: [NHD Certified Switches](https://wyrestorm0.sharepoint.com/PartnerResources/Shared%20Documents/Forms/AllItems.aspx?id=%2FPartnerResources%2FShared%20Documents%2FWyreStorm%20Resources%2FProducts%2FNetworkHD%2FNetworkHD%20100%2D200%2D400%2D500%2D600%2DCTL%2FDocumentation%2FSwitch%20Configuration%20Guides%2FNetworkHD%5FCertfiedSwitches%2Epdf&parent=%2FPartnerResources%2FShared%20Documents%2FWyreStorm%20Resources%2FProducts%2FNetworkHD%2FNetworkHD%20100%2D200%2D400%2D500%2D600%2DCTL%2FDocumentation%2FSwitch%20Configuration%20Guides&p=true&ga=1)
+
+- **NHD API**: [NHD API](https://wyrestorm0.sharepoint.com/PartnerResources/Shared%20Documents/Forms/AllItems.aspx?id=%2FPartnerResources%2FShared%20Documents%2FWyreStorm%20Resources%2FProducts%2FNetworkHD%2FNetworkHD%20100%2D200%2D400%2D500%2D600%2DCTL%2FDocumentation%2FNetworkHD%5FAPI%5Fv6%2E6%2Epdf&parent=%2FPartnerResources%2FShared%20Documents%2FWyreStorm%20Resources%2FProducts%2FNetworkHD%2FNetworkHD%20100%2D200%2D400%2D500%2D600%2DCTL%2FDocumentation&p=true&ga=1)
 
 ### NHD-110-TX
 The NHD-110-TX is a 4K AV over IP encoder designed for high-quality video distribution.
 
-- **NHD-110-TX Product Page**: [NHD-110-TX Product Page](https://www.wyrestorm.com/NHD-110-TX)
-- **NHD-110-TX Documentation**: [NHD-110-TX Documentation](https://www.wyrestorm.com/documentation)
-- **NHD-110-TX Software Downloads**: [NHD-110-TX Software Downloads](https://www.wyrestorm.com/downloads)
+- **NHD-110-TX Product Page**: [NHD-110-TX Product Page](https://www.wyrestorm.com/product/nhd-110-tx/)
 
 ### NHD-250-RX
 The NHD-250-RX is a 4K AV over IP decoder designed for high-quality video distribution.
 
-- **NHD-250-RX Product Page**: [NHD-250-RX Product Page](https://www.wyrestorm.com/NHD-250-RX)
-- **NHD-250-RX Documentation**: [NHD-250-RX Documentation](https://www.wyrestorm.com/documentation)
-- **NHD-250-RX Software Downloads**: [NHD-250-RX Software Downloads](https://www.wyrestorm.com/downloads)
+- **NHD-250-RX Product Page**: [NHD-250-RX Product Page](https://www.wyrestorm.com/product/nhd-250-rx/)
 
 ### NHD-150-RX
 The NHD-150-RX is a 1080p AV over IP decoder designed for high-quality video distribution.
 
-- **NHD-150-RX Product Page**: [NHD-150-RX Product Page](https://www.wyrestorm.com/NHD-150-RX)
-- **NHD-150-RX Documentation**: [NHD-150-RX Documentation](https://www.wyrestorm.com/documentation)
-- **NHD-150-RX Software Downloads**: [NHD-150-RX Software Downloads](https://www.wyrestorm.com/downloads)
+- **NHD-150-RX Product Page**: [NHD-150-RX Product Page](https://www.wyrestorm.com/product/nhd-150-rx/)
 
 ### NHD-140-TX
-The NHD-140-TX is a 1080p AV over IP encoder designed for high-quality video distribution.
+The NHD-140-TX is a Quad 1080p AV over IP encoder designed for high-quality video distribution.
 
-- **NHD-140-TX Product Page**: [NHD-140-TX Product Page](https://www.wyrestorm.com/NHD-140-TX)
-- **NHD-140-TX Documentation**: [NHD-140-TX Documentation](https://www.wyrestorm.com/documentation)
-- **NHD-140-TX Software Downloads**: [NHD-140-TX Software Downloads](https://www.wyrestorm.com/downloads)
-
-### NHD-CTL
-The NHD-CTL is a controller for managing NetworkHD systems, providing centralized control and configuration.
-
-- **NHD-CTL Product Page**: [NHD-CTL Product Page](https://www.wyrestorm.com/NHD-CTL)
-- **NHD-CTL Documentation**: [NHD-CTL Documentation](https://www.wyrestorm.com/documentation)
-- **NHD-CTL Software Downloads**: [NHD-CTL Software Downloads](https://www.wyrestorm.com/downloads)
+- **NHD-140-TX Product Page**: [NHD-140-TX Product Page](https://www.wyrestorm.com/product/nhd-140-tx/)
 
 ### NHD-CTL-PRO
 The NHD-CTL-PRO is an advanced controller for managing large-scale NetworkHD systems, offering enhanced features and capabilities.
 
-- **NHD-CTL-PRO Product Page**: [NHD-CTL-PRO Product Page](https://www.wyrestorm.com/NHD-CTL-PRO)
-- **NHD-CTL-PRO Documentation**: [NHD-CTL-PRO Documentation](https://www.wyrestorm.com/documentation)
-- **NHD-CTL-PRO Software Downloads**: [NHD-CTL-PRO Software Downloads](https://www.wyrestorm.com/downloads)
-
-## Network Configuration
-
-### IGMP Snooping
-IGMP Snooping is essential for managing multicast traffic in AV over IP systems. It helps to optimize network performance by ensuring that multicast traffic is only sent to the devices that need it.
-
-- **IGMP Snooping Overview**: [IGMP Snooping Overview](https://www.wyrestorm.com/IGMP-Snooping)
-- **IGMP Snooping Configuration Guide**: [IGMP Snooping Configuration Guide](https://www.wyrestorm.com/documentation)
-
-### Switch Configuration
-Proper switch configuration is crucial for the performance and reliability of AV over IP systems. WyreStorm provides guidelines and best practices for configuring network switches.
-
-- **Switch Configuration Guide**: [Switch Configuration Guide](https://www.wyrestorm.com/documentation)
-- **Recommended Switches**: [Recommended Switches](https://www.wyrestorm.com/recommended-switches)
+- **NHD-CTL-PRO Product Page**: [NHD-CTL-PRO Product Page](https://www.wyrestorm.com/product/nhd-ctl-pro-v2/)
 
 ## Key Features of WyreStorm Products
 

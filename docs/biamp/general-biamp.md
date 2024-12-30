@@ -10,7 +10,6 @@ Biamp is a leading provider of professional audio and video solutions for variou
 Tesira is Biamp's flagship platform for networked media systems. It offers a highly flexible and scalable solution for audio and video processing, routing, and distribution.
 
 - **TesiraFORTE**: A family of digital signal processors (DSPs) designed for conferencing and sound reinforcement applications.
-- **TesiraLUX**: An AVB/TSN-enabled video encoder and decoder that integrates with the Tesira platform for seamless audio and video distribution.
 - **TesiraCONNECT**: A five-port AVB switch that simplifies the deployment of Tesira systems.
 - **Tesira Server**: A powerful server that provides centralized processing and control for Tesira systems.
 - **Tesira Software**: Intuitive software for configuring and managing Tesira systems.
@@ -25,17 +24,13 @@ Parlé is Biamp's line of beamtracking microphones designed for superior audio c
 UBT (USB and Bluetooth) products provide versatile connectivity options for Tesira systems.
 
 - **Tesira EX-UBT**: An expander device that adds USB and Bluetooth audio capabilities to Tesira systems.
+  - **Using the Tesira EX-UBT or EX-USB**: [Using the Tesira EX-UBT or EX-USB](https://support.biamp.com/Tesira/Control/Using_the_Tesira_EX-UBT_or_EX-USB)
+    - This guide provides instructions on how to use the Tesira EX-UBT or EX-USB for audio and control applications.
 
 ### AVB
 AVB (Audio Video Bridging) is an open standard for transporting audio and video over Ethernet. Biamp's AVB-enabled products ensure seamless integration and high-quality signal distribution.
 
 - **TesiraCONNECT**: A five-port AVB switch that simplifies the deployment of Tesira systems.
-- **Netgear M4250 AVB Configuration**: A guide for configuring Netgear M4250 switches for AVB.
-
-### Dante
-Dante is a proprietary networking technology developed by Audinate. It is widely adopted and offers easy configuration and scalability.
-
-- **Dante Overview**: Information on integrating Dante with Biamp products.
 
 ### Amplifiers
 Biamp offers a range of amplifiers designed for various applications, providing high-quality audio amplification and distribution.

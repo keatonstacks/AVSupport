@@ -74,8 +74,6 @@ Tesira is a highly flexible and scalable audio and video networked media system.
   - Tesira devices can act as USB audio interfaces, providing multiple channels of audio to and from a computer.
   - Not all USB extenders are supported for multichannel audio. It is important to verify compatibility.
   - [TesiraFORTE USB Interface](https://support.biamp.com/Tesira/Control/TesiraFORTE_USB_interface)
-  - **Using the Tesira EX-UBT or EX-USB**: [Using the Tesira EX-UBT or EX-USB](https://support.biamp.com/Tesira/Control/Using_the_Tesira_EX-UBT_or_EX-USB)
-    - This guide provides instructions on how to use the Tesira EX-UBT or EX-USB for audio and control applications.
 
   </div>
 </details>
