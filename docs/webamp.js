@@ -1,5 +1,5 @@
 let webamp = null;
-let isWebampVisible = false;  // Track Webamp visibility state
+let isWebampVisible = localStorage.getItem('isWebampVisible') === 'true';  // Retrieve Webamp visibility state from local storage
 
 function toggleWinamp() {
   const app = document.getElementById("app");
@@ -18,35 +18,52 @@ function toggleWinamp() {
         {
           metaData: {
             artist: "Pretty Lights",
-            title: "WhereAreYouGoing_sum1dB_013124.mp3",
+            title: "Where Are You Going",
           },
           url: "media/WhereAreYouGoing_sum1dB_013124.mp3",
         },
         {
           metaData: {
             artist: "Pretty Lights",
-            title: "NEWHEIGHTS_sum2db_012224.mp3",
+            title: "New Heights",
           },
           url: "media/NEWHEIGHTS_sum2db_012224.mp3",
         },
         {
           metaData: {
             artist: "Pretty Lights",
-            title: "HOWCANYOULOSE_SEARCHING2.mp3",
+            title: "How Can You Lose",
           },
           url: "media/HOWCANYOULOSE_SEARCHING2.mp3",
+        },
+        {
+          metaData: {
+            artist: "Pretty Lights",
+            title: "Sunshine Coming Through",
+          },
+          url: "media/SunshineComeingThroughWoutro.mp3",
         },
       ],
     });
     webamp.renderWhenReady(app);
     isWebampVisible = true;
+    localStorage.setItem('isWebampVisible', 'true');  // Save Webamp visibility state to local storage
   } else {
     if (isWebampVisible) {
       webamp.close();
       isWebampVisible = false;
+      localStorage.setItem('isWebampVisible', 'false');  // Save Webamp visibility state to local storage
     } else {
       webamp.reopen();
       isWebampVisible = true;
+      localStorage.setItem('isWebampVisible', 'true');  // Save Webamp visibility state to local storage
     }
   }
 }
+
+// Automatically reopen Webamp if it was visible
+window.addEventListener('load', () => {
+  if (isWebampVisible) {
+    toggleWinamp();
+  }
+});
