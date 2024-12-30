@@ -47,7 +47,7 @@
   - Dante is a proprietary networking technology developed by Audinate.
   - It is widely adopted and offers easy configuration and scalability.
   - [Dante Overview](https://support.biamp.com/General/Networking/Dante?gad_source=1&gclid=CjwKCAiAg8S7BhATEiwAO2-R6smKwIExLt7p74ZxT-YJtgUi4MxZ8daaYk3H73dllew4ktn1lgx8QxoCKtoQAvD_BwE)
-
+  - [Recording using TesiraFORTE DAN and Dante Virtual Soundcard](https://support.biamp.com/Tesira/Miscellaneous/Recording_using_TesiraFORTE_DAN_with_DVS)
   </div>
 </details>
 
@@ -67,7 +67,7 @@
   </div>
 </details>
 
-<details data-tags="switch poe firmware dtmf">
+<details data-tags="switch poe firmware dtmf factory reset restore">
   <summary>Additional Resources</summary>
   <div markdown="1">
   
@@ -78,6 +78,6 @@
   - **Upgrading Tesira Firmware to Version 3.8 - 3.11**: [Firmware Upgrade Guide](https://support.biamp.com/Tesira/Miscellaneous/Upgrading_Tesira_firmware_to_version_3.8_-_3.11)
     - Instructions for upgrading Tesira firmware to versions 3.8 through 3.11.
   - **DTMF Tone Duration**: [DTMF Tone Duration](https://support.biamp.com/Tesira/Miscellaneous/DTMF_tone_duration)
-
+  - **Factory Reset Tesira**: [Factory Reset Tesira](https://support.biamp.com/Tesira/Miscellaneous/How_to_reset_a_Tesira_device_to_factory_defaults?gad_source=1&gclid=CjwKCAiApsm7BhBZEiwAvIu2Xxf7puQ5pcdvYPmouqGjjC4TWFftCS5YiWm-1fR0FrUyglYPSgpZNxoCNxEQAvD_BwE)
   </div>
 </details>

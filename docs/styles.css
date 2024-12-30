@@ -76,6 +76,10 @@ li {
     font-family: 'Montserrat', sans-serif; /* Use Montserrat font */
 }
 
+p {
+    font-family: 'Montserrat', sans-serif; /* Use Montserrat font for paragraphs */
+}
+
 img {
     max-width: 100%; /* Make images responsive */
     height: auto; /* Maintain aspect ratio */
