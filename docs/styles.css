@@ -1,29 +1,62 @@
 body {
     background-color: #121212;
     color: #ffffff;
+    font-family: Arial, sans-serif; /* Use a more readable font */
+    line-height: 1.6; /* Improve line spacing */
+    margin: 0;
+    padding: 0 20px; /* Add padding to the body */
 }
 
 a {
     color: #1e90ff; /* DodgerBlue for links */
+    text-decoration: none; /* Remove underline from links */
 }
 
 a:visited {
     color: #1e90ff; /* Ensure visited links are the same color */
 }
 
+a:hover {
+    color: #ff4500; /* Change color on hover */
+    text-decoration: underline; /* Add underline on hover */
+}
+
 h1, h2, h3, h4, h5, h6 {
     color: #ff4500; /* OrangeRed for headers */
     border-bottom: 2px solid #ff4500; /* Red underline for headers */
     padding-bottom: 0.3em; /* Add some space between the text and the underline */
+    margin-top: 1em; /* Add margin to the top of headers */
 }
 
 summary {
     color: #ff4500; /* Red for summary text */
     font-size: 1.2em; /* Larger text size for summary */
     cursor: pointer; /* Pointer cursor to indicate it's clickable */
+    margin-bottom: 0.5em; /* Add margin to the bottom of summary */
+}
+
+details {
+    margin-bottom: 1em; /* Add margin to the bottom of details */
+}
+
+code {
+    background-color: #1e1e1e; /* Dark background for code blocks */
+    color: #ffffff; /* White text for code blocks */
+    padding: 0.2em 0.4em; /* Add padding to code blocks */
+    border-radius: 4px; /* Rounded corners for code blocks */
+}
+
+pre {
+    background-color: #1e1e1e; /* Dark background for preformatted text */
+    color: #ffffff; /* White text for preformatted text */
+    padding: 1em; /* Add padding to preformatted text */
+    border-radius: 4px; /* Rounded corners for preformatted text */
+    overflow-x: auto; /* Enable horizontal scrolling */
 }
 
 nav, footer {
     background-color: #1e1e1e;
     color: #ffffff;
+    padding: 1em; /* Add padding to nav and footer */
+    margin-top: 1em; /* Add margin to the top of nav and footer */
 }
