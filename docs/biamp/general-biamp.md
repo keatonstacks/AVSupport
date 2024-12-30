@@ -1,6 +1,6 @@
 <link rel="stylesheet" href="../styles.css">
 <script src="../search.js"></script>
-<input type="text" id="searchBar" placeholder="Search Knowledge Base..." oninput="searchResources()" style="width: 60%; padding: 10px; margin-bottom: 20px">
+<input type="text" id="searchBar" placeholder="Search Knowledge Base..." oninput="searchResources()" style="width: 75%; padding: 10px; margin-bottom: 20px">
 
 # General Information about Biamp
 

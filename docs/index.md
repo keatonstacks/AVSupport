@@ -1,6 +1,7 @@
 <link rel="stylesheet" href="styles.css">
 <script src="https://unpkg.com/webamp"></script>
 <script src="webamp.js"></script>
+<script src="lastCommit.js"></script>
 
 ### Audio Visual Support Documentation
 
@@ -39,7 +40,8 @@ Having worked in the industry for 10 years, I hope to help provide organized, qu
 ### About
 
 **Author**: Keaton Stacks  
-**Date**: December 29, 2024
+**Date Created**: December 29, 2024
+<span id="lastUpdated">Last Updated: Loading...</span>
 
 <button onclick="toggleWinamp()">Play Pretty Lights</button>
 <div id="app"></div>
