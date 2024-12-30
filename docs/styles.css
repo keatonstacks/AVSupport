@@ -112,8 +112,9 @@ nav, footer {
 
 .highlight summary {
     font-weight: bold;
-    background-color: #f0f8ff;
-    border-left: 4px solid #0078d4;
-    padding-left: 5px;
+    color: #ffffff; /* Match the theme's text color */
+    background-color: rgba(255, 69, 0, 0.2); /* Subtle highlight with OrangeRed */
+    border-left: 4px solid #ff4500; /* Match your headers' underline color */
+    padding-left: 10px; /* More spacing for better readability */
     transition: background-color 0.3s ease, border-left 0.3s ease;
-  }
+}
