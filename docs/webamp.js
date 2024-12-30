@@ -45,6 +45,19 @@ function initializeWebamp() {
         },
       ],
     });
+
+    webamp.onClose(() => {
+      isWebampVisible = false;
+      localStorage.setItem('isWebampVisible', 'false');  // Save Webamp visibility state to local storage
+    });
+
+    webamp.onTrackDidChange((track) => {
+      const currentTrack = webamp.getMedia().getCurrentTrack();
+      const currentTime = webamp.getMedia().getCurrentTime();
+      sessionStorage.setItem('currentTrack', JSON.stringify(currentTrack));
+      sessionStorage.setItem('currentTime', currentTime);
+    });
+
     webamp.renderWhenReady(app);
   }
 }
@@ -56,8 +69,6 @@ function toggleWinamp() {
 
   if (isWebampVisible) {
     webamp.close();
-    isWebampVisible = false;
-    localStorage.setItem('isWebampVisible', 'false');  // Save Webamp visibility state to local storage
   } else {
     webamp.reopen();
     isWebampVisible = true;
@@ -70,5 +81,13 @@ window.addEventListener('load', () => {
   if (isWebampVisible) {
     initializeWebamp();
     webamp.reopen();
+
+    const currentTrack = JSON.parse(sessionStorage.getItem('currentTrack'));
+    const currentTime = sessionStorage.getItem('currentTime');
+
+    if (currentTrack && currentTime) {
+      webamp.getMedia().setCurrentTrack(currentTrack);
+      webamp.getMedia().seekToTime(currentTime);
+    }
   }
 });
