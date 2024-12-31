@@ -11,6 +11,16 @@ body {
     margin-right: 390px; /* Add margin to the right of the body */
 }
 
+canvas {
+    display: block;
+    position: fixed; /* Ensure it covers the entire background */
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1; /* Place behind all content */
+}
+
 a {
     color: #1e90ff; /* DodgerBlue for links */
     text-decoration: none; /* Remove underline from links */
@@ -22,13 +32,13 @@ a:visited {
 }
 
 a:hover {
-    color: #ff4500; /* Change color on hover */
+    color: #E31C23; /* Change color on hover to #E31C23 */
     text-decoration: underline; /* Add underline on hover */
 }
 
 h1, h2, h3, h4, h5, h6 {
-    color: #ff4500; /* OrangeRed for headers */
-    border-bottom: 2px solid #ff4500; /* Red underline for headers */
+    color: #E31C23; /* Use #E31C23 for headers */
+    border-bottom: 2px solid #E31C23; /* Use #E31C23 for underline */
     padding-bottom: 0.3em; /* Add some space between the text and the underline */
     margin-top: 1em; /* Add margin to the top of headers */
     font-family: 'Montserrat', sans-serif; /* Use Montserrat font for headers */
@@ -36,7 +46,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 summary {
-    color: #ff4500; /* Red for summary text */
+    color: #E31C23; /* Use #E31C23 for summary text */
     font-size: 1.2em; /* Larger text size for summary */
     cursor: pointer; /* Pointer cursor to indicate it's clickable */
     margin-bottom: 0.5em; /* Add margin to the bottom of summary */
@@ -124,17 +134,17 @@ details[open] summary {
 /* Ensure highlight works in both collapsed and expanded states */
 .highlight summary {
     font-weight: normal; /* Retain the original font weight */
-    color: #ff4500; /* Retain the original text color */
-    background-color: rgba(255, 69, 0, 0.2); /* Subtle background highlight */
-    border-left: 4px solid #ff4500; /* OrangeRed border for emphasis */
+    color: #E31C23; /* Use #E31C23 for text color */
+    background-color: rgba(227, 28, 35, 0.2); /* Subtle background highlight */
+    border-left: 4px solid #E31C23; /* Use #E31C23 for border */
     padding-left: 10px; /* Align with theme spacing */
     transition: background-color 0.3s ease, border-left 0.3s ease;
     font-family: 'Montserrat', sans-serif; /* Use Montserrat font */
 }
 
 details[open].highlight summary {
-    background-color: rgba(255, 69, 0, 0.2); /* Keep highlight when expanded */
-    border-left: 4px solid #ff4500; /* Ensure border is consistent */
+    background-color: rgba(227, 28, 35, 0.2); /* Keep highlight when expanded */
+    border-left: 4px solid #E31C23; /* Ensure border is consistent */
 }
 
 /* Ensure no extra background or shadows for the details */
