@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap');
 
 body {
-    /* Background: url('images/DarkFlower.jpg') no-repeat center center fixed; /* Set the background image */
+    Background: url('images/DarkFlower.jpg') no-repeat center center fixed; /* Set the background image */
     background-size: cover; /* Ensure the image covers the entire background */
     color: #ffffff;
     font-family: 'Montserrat', sans-serif; /* Use Montserrat font */
