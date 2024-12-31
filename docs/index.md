@@ -3,8 +3,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
 <script src="webamp.js"></script>
 <script src="lastCommit.js"></script>
-<script src="shader.js"></script>
 <canvas id="shaderCanvas"></canvas>
+<script src="shader.js"></script>
 
 ### Audio Visual Support Documentation
 
