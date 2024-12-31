@@ -1,8 +1,4 @@
-// ===========================================================
-//   SHADER.JS - Multi-Pass WebGL2 to Replicate Shadertoy Code
-// ===========================================================
 (() => {
-
     // ---------- 1) Basic Setup ----------
     const canvas = document.getElementById('shaderCanvas');
     const gl = canvas.getContext('webgl2', { alpha: false });
@@ -10,7 +6,6 @@
         console.error('WebGL 2.0 is not supported by your browser or device.');
         return;
     }
-
     // Fullscreen
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -19,7 +14,6 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
     });
-
     // A simple vertex shader: full-screen quad
     const QUAD_VS = `#version 300 es
     precision highp float;
@@ -355,13 +349,15 @@
         mat3 jupiterRotationMatrix = createRotationMatrix(-0.2, 0.3);
         vec3 rotatedJupiter = jupiterRotationMatrix * (jupiterSurfaceWithMask.xyz * jupiterMask);
         vec2 jupiterUV = generateSphericalUV(rotatedJupiter, iTime*0.02);
+        vec2 newUV = jupiterUV * 0.8 + vec2(0.1, 0.2);
+        newUV = clamp(newUV, 0.0, 1.0);
+        vec3 jupiterTexture = texture(iChannel0, newUV).xyz;
+        jupiterTexture = vec3(
+        pow(jupiterTexture.x, 3.5),
+        pow(jupiterTexture.y, 6.0),
+        pow(jupiterTexture.z, 8.0)
+        )*3.5;
 
-        // iChannel0 => Sharpened Jupiter
-        vec3 jupiterTexture = texture(iChannel0,
-            fract((jupiterUV*2.2 + vec2(0.0,0.8)))).xyz;
-        jupiterTexture = vec3(pow(jupiterTexture.x, 3.5),
-                              pow(jupiterTexture.y, 6.0),
-                              pow(jupiterTexture.z, 8.0)) * 3.5;
 
         // Io
         vec4 ioSurfaceWithMask = generateSphereSurfaceWithMask(uv + vec2(-0.32, -0.2), 0.07);
