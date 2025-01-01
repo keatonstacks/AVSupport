@@ -284,7 +284,7 @@ vec2 generateSphericalUV(vec3 position, float spin) {
     float width = sqrt(1.0 - position.y * position.y);
     float generatrixX = position.x / width;
     vec2 generatrix = vec2(generatrixX, position.y);
-    vec2 uv = asin(generatrix) / 3.14159 + vec2(0.5 + spin, 0.5);
+    vec2 uv = mod(asin(generatrix) / 3.14159 + vec2(0.5 + spin, 0.5), 1.0);
     return uv;
 }
 
@@ -333,7 +333,36 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     mat3 jupiterRotationMatrix = createRotationMatrix(-0.2, 0.3);
     vec3 rotatedJupiter = jupiterRotationMatrix * (jupiterSurfaceWithMask.xyz * jupiterMask);
     vec2 jupiterUV = generateSphericalUV(rotatedJupiter, iTime * 0.02);
-    vec3 jupiterTexture = texture(iChannel0, fract((jupiterUV * 2.2 + vec2(0.0, 0.8)) * aspectRatio) / aspectRatio).xyz;
+    vec2 scaledUV = jupiterUV * 2.2 + vec2(0.0, 0.8);
+    float u = fract(scaledUV.x);
+    float v = fract(scaledUV.y);
+
+    float blendRange = 0.05; // Increased for smoother transitions
+    float distToLeftEdge = u;
+    float distToRightEdge = 1.0 - u;
+    float minDist = min(distToLeftEdge, distToRightEdge);
+    float blendFactor = smoothstep(blendRange, 0.0, minDist);
+
+    // Sample neighboring textures for better blending
+    vec3 colorA = texture(iChannel0, vec2(u, v)).xyz;
+    vec3 colorB = texture(iChannel0, vec2(fract(u + 1.0), v)).xyz;
+    vec3 colorC = texture(iChannel0, vec2(u, fract(v + 1.0))).xyz;
+    vec3 colorD = texture(iChannel0, vec2(fract(u + 1.0), fract(v + 1.0))).xyz;
+
+    // Noise for organic blending
+    float noise = fract(sin(dot(vec2(u, v), vec2(12.9898, 78.233))) * 43758.5453);
+    float noiseFactor = smoothstep(0.4, 0.6, noise);
+
+    // Blend the textures with noise
+    vec3 blendedTexture = mix(
+        mix(colorA, colorB, blendFactor),
+        mix(colorC, colorD, blendFactor),
+        noiseFactor
+    );
+
+    // Apply additional color adjustment to enhance the planet surface
+    vec3 jupiterTexture = pow(blendedTexture, vec3(2.2)) * vec3(1.2, 1.0, 0.9); // Subtle reddish tint
+
     jupiterTexture = vec3(pow(jupiterTexture.x, 3.5), pow(jupiterTexture.y, 6.0), pow(jupiterTexture.z, 8.0)) * 3.5;
 
     // Io
