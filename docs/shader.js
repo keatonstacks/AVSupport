@@ -566,8 +566,8 @@
     }
 
     // Load actual textures
-    const ioTex = loadTexture('images/iotexture.png');
-    const nebulaTex = loadTexture('images/nebulatexture.png');
+    const ioTex = loadTexture('images/iotexture.jpg');
+    const nebulaTex = loadTexture('images/nebulatexture.jpg');
     const starsTex = loadTexture('images/stars.png');
 
     // ---------- 12) Rendering variables ----------
