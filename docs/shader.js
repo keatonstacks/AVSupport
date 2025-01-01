@@ -257,157 +257,125 @@
     // ---------- 5) Final Image Fragment Shader ----------
     const IMAGE_FS = `
     // Final pass that draws Jupiter, Io, stars, and nebula
-    uniform sampler2D iChannel0; // Sharpened Jupiter (Buffer B)
-    uniform sampler2D iChannel1; // Unsharpened swirl (Buffer A)
-    uniform sampler2D iChannel2; // Io texture
-    uniform sampler2D iChannel3; // Nebula (or star) texture
+uniform sampler2D iChannel0; // Sharpened Jupiter (Buffer B)
+uniform sampler2D iChannel1; // Unsharpened swirl (Buffer A)
+uniform sampler2D iChannel2; // Io texture
+uniform sampler2D iChannel3; // Nebula (or star) texture
 
-    uniform vec3 iResolution;
-    uniform float iTime;
+uniform vec3 iResolution;
+uniform float iTime;
 
-    out vec4 fragColor;
+out vec4 fragColor;
 
-    // from your "image" snippet:
-    #define BackgroundColor vec3(0.0941, 0.1019, 0.0901)
+// from your "image" snippet:
+#define BackgroundColor vec3(0.0941, 0.1019, 0.0901)
 
-    vec4 generateSphereSurfaceWithMask(vec2 uv, float radius) {
-        float radiusSquared = radius * radius;
-        float uvLengthSquared = dot(uv, uv);
-        float uvLength = sqrt(uvLengthSquared);
-        float mask = step(uvLength, radius);
-        vec3 surface = vec3(0.0);
-        if(mask > 0.0)
-        {
-            surface = vec3(uv / radius, sqrt(radiusSquared - uvLengthSquared));
-        }
-        else
-        {
-            surface = vec3(uv / uvLength, uvLength - radius);
-        }
-        return vec4(surface, mask);
+vec4 generateSphereSurfaceWithMask(vec2 uv, float radius) {
+    float radiusSquared = radius * radius;
+    float uvLengthSquared = dot(uv, uv);
+    float uvLength = sqrt(uvLengthSquared);
+    float mask = step(uvLength, radius);
+    vec3 surface = vec3(0.0);
+    if (mask > 0.0) {
+        surface = vec3(uv / radius, sqrt(radiusSquared - uvLengthSquared));
+    } else {
+        surface = vec3(uv / uvLength, uvLength - radius);
     }
+    return vec4(surface, mask);
+}
 
-    vec2 generateSphericalUV(vec3 position, float spin)
-    {
-        float width = sqrt(1.0 - position.y * position.y);
-        float generatrixX = position.x / width;
-        vec2 generatrix = vec2(generatrixX, position.y);
-        vec2 uv = asin(generatrix) / 3.14159 + vec2(0.5 + spin, 0.5);
-        return uv;
+vec2 generateSphericalUV(vec3 position, float spin) {
+    float width = sqrt(1.0 - position.y * position.y);
+    float generatrixX = position.x / width;
+    vec2 generatrix = vec2(generatrixX, position.y);
+    vec2 uv = asin(generatrix) / 3.14159 + vec2(0.5 + spin, 0.5);
+    return uv;
+}
+
+mat3 createRotationMatrix(float pitch, float roll) {
+    float cosPitch = cos(pitch);
+    float sinPitch = sin(pitch);
+    float cosRoll = cos(roll);
+    float sinRoll = sin(roll);
+    return mat3(
+        cosRoll, -sinRoll * cosPitch, sinRoll * sinPitch,
+        sinRoll, cosRoll * cosPitch, -cosRoll * sinPitch,
+        0.0, sinPitch, cosPitch
+    );
+}
+
+vec4 atmosphere(vec4 sphereSurfaceWithMask, vec3 lightDirection, vec3 atmosphereColor, float haloWidth, float minAtmosphere, float maxAtmosphere, float falloff) {
+    vec3 absorbtion = vec3(2.0, 3.0, 4.0);
+    float inverseWidth = 1.0 / haloWidth;
+    float fresnelBlend = pow(1.0 - sphereSurfaceWithMask.z, falloff);
+    float amount = mix(minAtmosphere, maxAtmosphere, fresnelBlend);
+    vec3 normal = sphereSurfaceWithMask.xyz;
+    if (sphereSurfaceWithMask.w < 0.5) {
+        float haloBlend = pow(max(1.0 - sphereSurfaceWithMask.z * inverseWidth, 0.0), 5.0);
+        amount = haloBlend * maxAtmosphere;
+        normal = vec3(sphereSurfaceWithMask.xy, 0.0);
     }
+    float light = max((dot(normal, lightDirection) + 0.3) / 1.3, 0.0);
+    vec3 absorbedLight = vec3(pow(light, absorbtion.x), pow(light, absorbtion.y), pow(light, absorbtion.z));
+    vec3 litAtmosphere = absorbedLight * atmosphereColor;
+    return vec4(litAtmosphere, amount);
+}
 
-    mat3 createRotationMatrix(float pitch, float roll) {
-        float cosPitch = cos(pitch);
-        float sinPitch = sin(pitch);
-        float cosRoll = cos(roll);
-        float sinRoll = sin(roll);
-        return mat3(
-            cosRoll,            -sinRoll * cosPitch,   sinRoll * sinPitch,
-            sinRoll,             cosRoll * cosPitch,  -cosRoll * sinPitch,
-            0.0,                 sinPitch,             cosPitch
-        );
-    }
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+    float shorterSide = min(iResolution.x, iResolution.y);
+    float aspectRatio = iResolution.x / iResolution.y;
+    vec2 offset = iResolution.x > iResolution.y ? vec2(aspectRatio, 1.0) * 0.5 : vec2(1.0, 1.0 / aspectRatio) * 0.5;
 
-    vec4 atmosphere( vec4 sphereSurfaceWithMask, vec3 lightDirection, vec3 atmosphereColor,
-                     float haloWidth, float minAtmosphere, float maxAtmosphere, float falloff)
-    {
-        vec3 absorbtion = vec3(2.0, 3.0, 4.0);
-        float inverseWidth = 1.0 / haloWidth;
-        float fresnelBlend = pow(1.0 - sphereSurfaceWithMask.z, falloff);
-        float amount = mix(minAtmosphere, maxAtmosphere, fresnelBlend);
+    vec2 uv = (fragCoord / shorterSide - offset);
+    vec3 lightDirection = normalize(vec3(1.0, 1.0, 0.8));
 
-        vec3 normal = sphereSurfaceWithMask.xyz;
-        if(sphereSurfaceWithMask.w < 0.5)
-        {
-            float haloBlend = pow(max(1.0 - sphereSurfaceWithMask.z*inverseWidth, 0.0), 5.0);
-            amount = haloBlend * maxAtmosphere;
-            normal = vec3(sphereSurfaceWithMask.xy, 0.0);
-        }
-        float light = max((dot(normal, lightDirection)+0.3)/1.3, 0.0);
-        vec3 absorbedLight = vec3(pow(light, absorbtion.x), pow(light, absorbtion.y), pow(light, absorbtion.z));
-        vec3 litAtmosphere = absorbedLight * atmosphereColor;
-        return vec4(litAtmosphere, amount);
-    }
+    // Jupiter
+    vec4 jupiterSurfaceWithMask = generateSphereSurfaceWithMask(uv + vec2(0.2, 0.15), 0.6);
+    float jupiterLight = pow(max(dot(lightDirection, jupiterSurfaceWithMask.xyz), 0.0), 0.8);
+    vec4 jupiterAtmosphere = atmosphere(jupiterSurfaceWithMask, lightDirection, vec3(1.0, 0.7, 0.4) * 3.0, 0.2, 0.05, 0.6, 2.0);
+    float jupiterMask = clamp(jupiterSurfaceWithMask.w, 0.0, 1.0);
+    mat3 jupiterRotationMatrix = createRotationMatrix(-0.2, 0.3);
+    vec3 rotatedJupiter = jupiterRotationMatrix * (jupiterSurfaceWithMask.xyz * jupiterMask);
+    vec2 jupiterUV = generateSphericalUV(rotatedJupiter, iTime * 0.02);
+    vec3 jupiterTexture = texture(iChannel0, fract((jupiterUV * 2.2 + vec2(0.0, 0.8)) * aspectRatio) / aspectRatio).xyz;
+    jupiterTexture = vec3(pow(jupiterTexture.x, 3.5), pow(jupiterTexture.y, 6.0), pow(jupiterTexture.z, 8.0)) * 3.5;
 
-    void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-        float shorterSide = min(iResolution.x, iResolution.y);
-        float aspectRatio = iResolution.x / iResolution.y;
-        vec2 offset = (iResolution.x > iResolution.y)
-            ? vec2(aspectRatio,1.0)*0.5
-            : vec2(1.0, 1.0/aspectRatio)*0.5;
+    // Io
+    vec4 ioSurfaceWithMask = generateSphereSurfaceWithMask(uv + vec2(-0.32, -0.2), 0.07);
+    float ioLight = pow(max(dot(lightDirection, ioSurfaceWithMask.xyz), 0.0), 0.4);
+    vec4 ioAtmosphere = atmosphere(ioSurfaceWithMask, lightDirection, vec3(1.0, 0.9, 0.8) * 1.5, 0.06, 0.03, 1.0, 4.0);
+    float ioMask = clamp(ioSurfaceWithMask.w, 0.0, 1.0);
+    mat3 ioRotationMatrix = createRotationMatrix(0.4, -0.1);
+    vec3 rotatedIo = ioRotationMatrix * (ioSurfaceWithMask.xyz * ioMask);
+    vec2 ioUV = generateSphericalUV(rotatedIo, -iTime * 0.05);
+    vec3 ioTexture = texture(iChannel2, fract((ioUV + vec2(0.0, 0.8)) * aspectRatio) / aspectRatio).xyz;
+    ioTexture = vec3(min(pow(1.0 - ioTexture.x, 5.5) * 2.0, 1.0));
 
-        vec2 uv = (fragCoord / shorterSide - offset);
-        vec3 lightDirection = normalize(vec3(1.0, 1.0, 0.8));
+    // Stars
+    vec3 stars = vec3(pow(texture(iChannel1, uv).x, 25.0)) * vec3(1.0, 0.4, 0.3) * 3.0;
+    vec2 nebulaUV = uv;
+    vec3 nebulaTexture = texture(iChannel3, nebulaUV).xyz;
+    float nebulaFade = pow(max(1.0 - uv.y, 0.0), 2.5) * 0.5;
+    vec3 nebulaTint = vec3(0.9, 0.3, 0.4);
+    vec3 nebula = vec3(pow(nebulaTexture.x, 2.0)) * nebulaFade * nebulaTint;
+    stars += nebula;
 
-        // Jupiter
-        vec4 jupiterSurfaceWithMask = generateSphereSurfaceWithMask(uv + vec2(0.2, 0.15), 0.6);
-        float jupiterLight = pow(max(dot(lightDirection, jupiterSurfaceWithMask.xyz), 0.0), 0.8);
-        vec4 jupiterAtmos = atmosphere(jupiterSurfaceWithMask, lightDirection, vec3(1.0, 0.7, 0.4)*3.0,
-                                       0.2, 0.05, 0.6, 2.0);
-        float jupiterMask = clamp(jupiterSurfaceWithMask.w, 0.0,1.0);
+    // Combining
+    vec3 jupiterWithBackground = mix(stars, jupiterTexture * jupiterLight, jupiterMask);
+    vec3 jupiterWithAtmosphere = mix(jupiterWithBackground, jupiterAtmosphere.xyz, jupiterAtmosphere.w);
+    vec3 jupiterWithIo = mix(jupiterWithAtmosphere, ioTexture * ioLight, ioMask);
+    vec3 jupiterWithIoWithAtmosphere = mix(jupiterWithIo, ioAtmosphere.xyz, ioAtmosphere.w);
 
-        mat3 jupiterRotationMatrix = createRotationMatrix(-0.2, 0.3);
-        vec3 rotatedJupiter = jupiterRotationMatrix * (jupiterSurfaceWithMask.xyz * jupiterMask);
-        vec2 jupiterUV = generateSphericalUV(rotatedJupiter, iTime*0.02);
-        vec2 newUV = jupiterUV * 0.8 + vec2(0.1, 0.2);
-        newUV = clamp(newUV, 0.0, 1.0);
-        vec3 jupiterTexture = texture(iChannel0, newUV).xyz;
-        jupiterTexture = vec3(
-        pow(jupiterTexture.x, 3.5),
-        pow(jupiterTexture.y, 6.0),
-        pow(jupiterTexture.z, 8.0)
-        )*3.5;
+    vec2 overlayUV = fragCoord.xy / iResolution.xy;
+    vec3 overlayColor = mix(0.3, 0.9, pow(overlayUV.x, 1.7)) * vec3(1.0, 0.35, 0.1) * 1.4;
+    vec3 imageWithOverlay = mix(jupiterWithIoWithAtmosphere, overlayColor, pow(1.0 - overlayUV.y * 0.5, 5.0) * 0.7 + 0.1);
 
+    fragColor = vec4(imageWithOverlay, 1.0);
+}
 
-        // Io
-        vec4 ioSurfaceWithMask = generateSphereSurfaceWithMask(uv + vec2(-0.32, -0.2), 0.07);
-        float ioLight = pow(max(dot(lightDirection, ioSurfaceWithMask.xyz), 0.0), 0.4);
-        vec4 ioAtmos = atmosphere(ioSurfaceWithMask, lightDirection, vec3(1.0, 0.9, 0.8)*1.5,
-                                  0.06, 0.03, 1.0, 4.0);
-        float ioMask = clamp(ioSurfaceWithMask.w, 0.0,1.0);
-
-        mat3 ioRotationMatrix = createRotationMatrix(0.4, -0.1);
-        vec3 rotatedIo = ioRotationMatrix * (ioSurfaceWithMask.xyz * ioMask);
-        vec2 ioUV = generateSphericalUV(rotatedIo, -iTime*0.05);
-
-        // iChannel2 => Io texture
-        vec3 ioTexture = texture(iChannel2, fract(ioUV + vec2(0.0,0.8))).xyz;
-        ioTexture = vec3(min(pow(1.0 - ioTexture.x, 5.5)*2.0, 1.0));
-
-        // iChannel1 => we use as "stars"
-        vec3 stars = vec3(pow(texture(iChannel1, uv).x, 25.0)) * vec3(1.0,0.4,0.3)*3.0;
-
-        // iChannel3 => Nebula
-        vec2 nebulaUV = uv; 
-        vec3 nebulaTexture = texture(iChannel3, nebulaUV).xyz;
-        float nebulaFade = pow(max(1.0 - uv.y, 0.0), 2.5)*0.5;
-        vec3 nebulaTint = vec3(0.9, 0.3, 0.4);
-        vec3 nebula = vec3(pow(nebulaTexture.x, 2.0)) * nebulaFade * nebulaTint;
-        stars += nebula; // add the nebula over the star field
-
-        // Combine Jupiter with background
-        vec3 jupiterWithBackground = mix(stars, jupiterTexture*jupiterLight, jupiterMask);
-        vec3 jupiterWithAtmosphere = mix(jupiterWithBackground, jupiterAtmos.xyz, jupiterAtmos.w);
-
-        // Add Io
-        vec3 jupiterWithIo = mix(jupiterWithAtmosphere, ioTexture * ioLight, ioMask);
-        vec3 jupiterWithIoAtmos = mix(jupiterWithIo, ioAtmos.xyz, ioAtmos.w);
-
-        // Some overlay effect
-        vec2 overlayUV = fragCoord.xy / iResolution.xy;
-        vec3 overlayColor = mix(0.3, 0.9, pow(overlayUV.x,1.7)) * vec3(1.0,0.35,0.1)*1.4;
-        vec3 imageWithOverlay = mix(
-            jupiterWithIoAtmos, 
-            overlayColor, 
-            pow(1.0 - overlayUV.y*0.5, 5.0)*0.7 + 0.1
-        );
-
-        fragColor = vec4(imageWithOverlay, 1.0);
-    }
-
-    void main() {
-        mainImage(fragColor, gl_FragCoord.xy);
-    }
+void main() {
+    mainImage(fragColor, gl_FragCoord.xy);
+}
     `;
 
     // ---------- 6) Helper to compile & link WebGL programs ----------
@@ -445,254 +413,230 @@
     }
 
     // ---------- 7) Create Pass Programs (A, B, Final) ----------
-    const vs = QUAD_VS;
-    const fsA = COMMON_GLSL + BUFFER_A_FS;
-    const fsB = COMMON_GLSL + BUFFER_B_FS;
-    const fsFinal = COMMON_GLSL + IMAGE_FS;
+const vs = QUAD_VS;
+const fsA = COMMON_GLSL + BUFFER_A_FS;
+const fsB = COMMON_GLSL + BUFFER_B_FS;
+const fsFinal = COMMON_GLSL + IMAGE_FS;
 
-    const progA = createProgram(vs, fsA);    // Buffer A
-    const progB = createProgram(vs, fsB);    // Buffer B
-    const progFinal = createProgram(vs, fsFinal); // Final
+const progA = createProgram(vs, fsA);    // Buffer A
+const progB = createProgram(vs, fsB);    // Buffer B
+const progFinal = createProgram(vs, fsFinal); // Final
 
-    if (!progA || !progB || !progFinal) {
-        console.error('Failed to create all programs.');
-        return;
-    }
+if (!progA || !progB || !progFinal) {
+    console.error('Failed to create all programs.');
+    return;
+}
 
-    // ---------- 8) Full-Screen Quad Setup ----------
-    const quadVbo = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
-    const quadVerts = new Float32Array([
-        -1,-1,  1,-1,  -1, 1,
-        -1, 1,  1,-1,   1, 1
-    ]);
-    gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
+// ---------- 8) Full-Screen Quad Setup ----------
+const quadVbo = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
+const quadVerts = new Float32Array([
+    -1, -1, 1, -1, -1, 1,
+    -1, 1, 1, -1, 1, 1
+]);
+gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
 
-    // Prepare a small helper function
-    function setupVertexAttrib(program) {
-        const loc = gl.getAttribLocation(program, 'position');
-        gl.enableVertexAttribArray(loc);
-        gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-    }
+function setupVertexAttrib(program) {
+    const loc = gl.getAttribLocation(program, 'position');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+}
 
-    // ---------- 9) Create framebuffers for A & B ----------
-    const BUFFER_WIDTH = 512;   // can increase for higher quality
-    const BUFFER_HEIGHT = 512;  // can increase for higher quality
+// ---------- 9) Create framebuffers for A & B ----------
+const BUFFER_WIDTH = 512;
+const BUFFER_HEIGHT = 512;
 
-    function createFBO(width, height) {
-        const fbo = gl.createFramebuffer();
-        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+function createFBO(width, height) {
+    const fbo = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
 
-        const tex = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, tex);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height,
-            0, gl.RGBA, gl.UNSIGNED_BYTE, null);
-
-        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
-                                gl.TEXTURE_2D, tex, 0);
-
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        return { fbo, tex };
-    }
-
-    // We need 2 FBOs for A because we do a feedback (ping-pong).
-    const fboA0 = createFBO(BUFFER_WIDTH, BUFFER_HEIGHT);
-    const fboA1 = createFBO(BUFFER_WIDTH, BUFFER_HEIGHT);
-    let currentA = 0; // which FBO is “current frame” vs “previous frame”
-
-    // Single FBO for B output
-    const fboB = createFBO(BUFFER_WIDTH, BUFFER_HEIGHT);
-
-    // ---------- 10) Create noise texture (for iChannel0 in Buffer A) ----------
-    // We’ll generate a small random 2D texture. Shadertoy often has a 256x256 noise.
-    const NOISE_WIDTH = 256, NOISE_HEIGHT = 256;
-    const noiseData = new Uint8Array(NOISE_WIDTH * NOISE_HEIGHT * 4);
-    for (let i = 0; i < noiseData.length; i++) {
-        noiseData[i] = Math.floor(Math.random() * 256);
-    }
-    const noiseTex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, noiseTex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    const tex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
-        NOISE_WIDTH, NOISE_HEIGHT, 0,
-        gl.RGBA, gl.UNSIGNED_BYTE, noiseData);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 
-    // Load texture from URL
-    function loadTexture(url) {
-        const texture = gl.createTexture();
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return { fbo, tex };
+}
+
+const fboA0 = createFBO(BUFFER_WIDTH, BUFFER_HEIGHT);
+const fboA1 = createFBO(BUFFER_WIDTH, BUFFER_HEIGHT);
+let currentA = 0;
+
+const fboB = createFBO(BUFFER_WIDTH, BUFFER_HEIGHT);
+
+// ---------- 10) Create noise texture (for iChannel0 in Buffer A) ----------
+const NOISE_WIDTH = 256, NOISE_HEIGHT = 256;
+const noiseData = new Uint8Array(NOISE_WIDTH * NOISE_HEIGHT * 4);
+for (let i = 0; i < noiseData.length; i++) {
+    noiseData[i] = Math.floor(Math.random() * 256);
+}
+const noiseTex = gl.createTexture();
+gl.bindTexture(gl.TEXTURE_2D, noiseTex);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, NOISE_WIDTH, NOISE_HEIGHT, 0, gl.RGBA, gl.UNSIGNED_BYTE, noiseData);
+
+// Load texture from URL
+function loadTexture(url) {
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+    const level = 0;
+    const internalFormat = gl.RGBA;
+    const width = 1;
+    const height = 1;
+    const border = 0;
+    const srcFormat = gl.RGBA;
+    const srcType = gl.UNSIGNED_BYTE;
+    const pixel = new Uint8Array([0, 0, 255, 255]); // blue
+    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, width, height, border, srcFormat, srcType, pixel);
+
+    const image = new Image();
+    image.onload = function() {
         gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
 
-        // Fill the texture with a 1x1 blue pixel until the image loads
-        const level = 0;
-        const internalFormat = gl.RGBA;
-        const width = 1;
-        const height = 1;
-        const border = 0;
-        const srcFormat = gl.RGBA;
-        const srcType = gl.UNSIGNED_BYTE;
-        const pixel = new Uint8Array([0, 0, 255, 255]); // blue
-        gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, width, height, border, srcFormat, srcType, pixel);
+        if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
+            gl.generateMipmap(gl.TEXTURE_2D);
+        } else {
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        }
+    };
 
-        // Asynchronously load the image
-        const image = new Image();
-        image.onload = function() {
-            gl.bindTexture(gl.TEXTURE_2D, texture);
-            gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
+    image.onerror = function() {
+        console.error('Failed to load texture from URL:', url);
+    };
 
-            // Check if the image is a power of 2 in both dimensions
-            if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
-                gl.generateMipmap(gl.TEXTURE_2D);
-            } else {
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-            }
-        };
-        image.src = url;
+    image.src = url;
 
-        return texture;
-    }
+    return texture;
+}
 
-    // Check if a value is a power of 2
-    function isPowerOf2(value) {
-        return (value & (value - 1)) == 0;
-    }
+function isPowerOf2(value) {
+    return (value & (value - 1)) == 0;
+}
 
-    // Load actual textures
-    const ioTex = loadTexture('images/iotexture.jpg');
-    const nebulaTex = loadTexture('images/nebulatexture.jpg');
-    const starsTex = loadTexture('images/stars.png');
+const ioTex = loadTexture('images/iotexture.jpg');
+const nebulaTex = loadTexture('images/nebulatexture.jpg');
+const starsTex = loadTexture('images/stars.png');
 
-    // ---------- 12) Rendering variables ----------
-    let iFrame = 0;
-    const startTime = performance.now();
+// ---------- 12) Rendering variables ----------
+let iFrame = 0;
+const startTime = performance.now();
 
-    // ---------- 13) The Render Loop ----------
-    function render() {
-        const timeNow = performance.now();
-        const iTime = (timeNow - startTime)*0.001;
-        // === Pass A: produce swirling Jupiter ===
-        //   iChannel0 = noiseTex
-        //   iChannel1 = previous frame of A
-        const prevA = currentA;
-        const nextA = 1 - currentA; 
-        // so if currentA=0 => nextA=1, else nextA=0
-        const prevFboA = (prevA===0) ? fboA0 : fboA1;
-        const nextFboA = (nextA===0) ? fboA0 : fboA1;
+// ---------- 13) The Render Loop ----------
+function render() {
+    const timeNow = performance.now();
+    const iTime = (timeNow - startTime) * 0.001;
 
-        gl.bindFramebuffer(gl.FRAMEBUFFER, nextFboA.fbo);
-        gl.viewport(0, 0, BUFFER_WIDTH, BUFFER_HEIGHT);
-        gl.useProgram(progA);
+    // === Pass A: produce swirling Jupiter ===
+    const prevA = currentA;
+    const nextA = 1 - currentA;
+    const prevFboA = (prevA === 0) ? fboA0 : fboA1;
+    const nextFboA = (nextA === 0) ? fboA0 : fboA1;
 
-        // VBO
-        gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
-        setupVertexAttrib(progA);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, nextFboA.fbo);
+    gl.viewport(0, 0, BUFFER_WIDTH, BUFFER_HEIGHT);
+    gl.useProgram(progA);
 
-        // Uniforms
-        let loc = gl.getUniformLocation(progA, 'iTime');
-        gl.uniform1f(loc, iTime);
-        loc = gl.getUniformLocation(progA, 'iResolution');
-        gl.uniform3f(loc, BUFFER_WIDTH, BUFFER_HEIGHT, 1.0);
-        loc = gl.getUniformLocation(progA, 'iFrame');
-        gl.uniform1i(loc, iFrame);
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
+    setupVertexAttrib(progA);
 
-        // Bind iChannel0 (noise)
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, noiseTex);
-        loc = gl.getUniformLocation(progA, 'iChannel0');
-        gl.uniform1i(loc, 0);
+    let loc = gl.getUniformLocation(progA, 'iTime');
+    gl.uniform1f(loc, iTime);
+    loc = gl.getUniformLocation(progA, 'iResolution');
+    gl.uniform3f(loc, BUFFER_WIDTH, BUFFER_HEIGHT, 1.0);
+    loc = gl.getUniformLocation(progA, 'iFrame');
+    gl.uniform1i(loc, iFrame);
 
-        // Bind iChannel1 (previous swirl)
-        gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, prevFboA.tex);
-        loc = gl.getUniformLocation(progA, 'iChannel1');
-        gl.uniform1i(loc, 1);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, noiseTex);
+    loc = gl.getUniformLocation(progA, 'iChannel0');
+    gl.uniform1i(loc, 0);
 
-        // Draw
-        gl.clearColor(0.0,0.0,0.0,1.0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, prevFboA.tex);
+    loc = gl.getUniformLocation(progA, 'iChannel1');
+    gl.uniform1i(loc, 1);
 
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-        // === Pass B: sharpen that swirl ===
-        gl.bindFramebuffer(gl.FRAMEBUFFER, fboB.fbo);
-        gl.viewport(0, 0, BUFFER_WIDTH, BUFFER_HEIGHT);
-        gl.useProgram(progB);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
-        setupVertexAttrib(progB);
+    // === Pass B: sharpen that swirl ===
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fboB.fbo);
+    gl.viewport(0, 0, BUFFER_WIDTH, BUFFER_HEIGHT);
+    gl.useProgram(progB);
 
-        loc = gl.getUniformLocation(progB, 'iResolution');
-        gl.uniform3f(loc, BUFFER_WIDTH, BUFFER_HEIGHT, 1.0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
+    setupVertexAttrib(progB);
 
-        // iChannel0 = swirl from pass A
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, nextFboA.tex);
-        loc = gl.getUniformLocation(progB, 'iChannel0');
-        gl.uniform1i(loc, 0);
+    loc = gl.getUniformLocation(progB, 'iResolution');
+    gl.uniform3f(loc, BUFFER_WIDTH, BUFFER_HEIGHT, 1.0);
 
-        gl.clearColor(0,0,0,1);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, nextFboA.tex);
+    loc = gl.getUniformLocation(progB, 'iChannel0');
+    gl.uniform1i(loc, 0);
 
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-        // === Final Pass: draw to screen ===
-        gl.viewport(0, 0, canvas.width, canvas.height);
-        gl.useProgram(progFinal);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
-        setupVertexAttrib(progFinal);
+    // === Final Pass: draw to screen ===
+    gl.viewport(0, 0, canvas.width, canvas.height);
+    gl.useProgram(progFinal);
 
-        // iResolution, iTime
-        loc = gl.getUniformLocation(progFinal, 'iResolution');
-        gl.uniform3f(loc, canvas.width, canvas.height, 1.0);
-        loc = gl.getUniformLocation(progFinal, 'iTime');
-        gl.uniform1f(loc, iTime);
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
+    setupVertexAttrib(progFinal);
 
-        // iChannel0 => buffer B's output (sharpened Jupiter)
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, fboB.tex);
-        loc = gl.getUniformLocation(progFinal, 'iChannel0');
-        gl.uniform1i(loc, 0);
+    loc = gl.getUniformLocation(progFinal, 'iResolution');
+    gl.uniform3f(loc, canvas.width, canvas.height, 1.0);
+    loc = gl.getUniformLocation(progFinal, 'iTime');
+    gl.uniform1f(loc, iTime);
 
-        // iChannel1 => stars texture (loaded from image)
-        gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, starsTex);
-        loc = gl.getUniformLocation(progFinal, 'iChannel1');
-        gl.uniform1i(loc, 1);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, fboB.tex);
+    loc = gl.getUniformLocation(progFinal, 'iChannel0');
+    gl.uniform1i(loc, 0);
 
-        // iChannel2 => Io texture (loaded from image)
-        gl.activeTexture(gl.TEXTURE2);
-        gl.bindTexture(gl.TEXTURE_2D, ioTex);
-        loc = gl.getUniformLocation(progFinal, 'iChannel2');
-        gl.uniform1i(loc, 2);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, starsTex);
+    loc = gl.getUniformLocation(progFinal, 'iChannel1');
+    gl.uniform1i(loc, 1);
 
-        // iChannel3 => nebula texture (loaded from image)
-        gl.activeTexture(gl.TEXTURE3);
-        gl.bindTexture(gl.TEXTURE_2D, nebulaTex);
-        loc = gl.getUniformLocation(progFinal, 'iChannel3');
-        gl.uniform1i(loc, 3);
+    gl.activeTexture(gl.TEXTURE2);
+    gl.bindTexture(gl.TEXTURE_2D, ioTex);
+    loc = gl.getUniformLocation(progFinal, 'iChannel2');
+    gl.uniform1i(loc, 2);
 
-        gl.clearColor(0.0,0.0,0.0,1.0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.activeTexture(gl.TEXTURE3);
+    gl.bindTexture(gl.TEXTURE_2D, nebulaTex);
+    loc = gl.getUniformLocation(progFinal, 'iChannel3');
+    gl.uniform1i(loc, 3);
 
-        // swap ping-pong
-        currentA = nextA;
+    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-        iFrame++;
-        requestAnimationFrame(render);
-    }
-
+    currentA = nextA;
+    iFrame++;
     requestAnimationFrame(render);
+}
+
+requestAnimationFrame(render);
 
 })();
