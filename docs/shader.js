@@ -14,7 +14,7 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
     });
-    // A simple vertex shader: full-screen quad
+
     const QUAD_VS = `#version 300 es
     precision highp float;
     layout(location = 0) in vec2 position;
@@ -26,10 +26,6 @@
     }
     `;
 
-    // We'll create separate fragment shaders for Buffer A, Buffer B, and Final pass.
-    // The "common" code is appended to the top of each.
-
-    // ---------- 2) Common GLSL Code (pasted in each pass) ----------
     const COMMON_GLSL = `#version 300 es
     precision highp float;
 
