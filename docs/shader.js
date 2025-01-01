@@ -524,27 +524,51 @@
         NOISE_WIDTH, NOISE_HEIGHT, 0,
         gl.RGBA, gl.UNSIGNED_BYTE, noiseData);
 
-    // ---------- 11) Create placeholders for Io + Nebula (iChannel2 + iChannel3) ----------
-    // If you have actual images, load them instead.
-    function createPlaceholderTexture(color) {
-        const tex = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, tex);
-        const placeholder = new Uint8Array([ 
-            Math.round(color[0]*255),
-            Math.round(color[1]*255),
-            Math.round(color[2]*255),
-            255
-        ]);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1,1, 0,
-                      gl.RGBA, gl.UNSIGNED_BYTE, placeholder);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        return tex;
+    // Load texture from URL
+    function loadTexture(url) {
+        const texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+
+        // Fill the texture with a 1x1 blue pixel until the image loads
+        const level = 0;
+        const internalFormat = gl.RGBA;
+        const width = 1;
+        const height = 1;
+        const border = 0;
+        const srcFormat = gl.RGBA;
+        const srcType = gl.UNSIGNED_BYTE;
+        const pixel = new Uint8Array([0, 0, 255, 255]); // blue
+        gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, width, height, border, srcFormat, srcType, pixel);
+
+        // Asynchronously load the image
+        const image = new Image();
+        image.onload = function() {
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
+
+            // Check if the image is a power of 2 in both dimensions
+            if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
+                gl.generateMipmap(gl.TEXTURE_2D);
+            } else {
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            }
+        };
+        image.src = url;
+
+        return texture;
     }
-    const ioTex = createPlaceholderTexture([0.8, 0.7, 0.5]);
-    const nebulaTex = createPlaceholderTexture([0.3, 0.05, 0.2]);
+
+    // Check if a value is a power of 2
+    function isPowerOf2(value) {
+        return (value & (value - 1)) == 0;
+    }
+
+    // Load actual textures
+    const ioTex = loadTexture('images/ioTexture.png');
+    const nebulaTex = loadTexture('images/nebulaTexture.png');
+    const starsTex = loadTexture('images/starsTexture.png');
 
     // ---------- 12) Rendering variables ----------
     let iFrame = 0;
@@ -554,7 +578,6 @@
     function render() {
         const timeNow = performance.now();
         const iTime = (timeNow - startTime)*0.001;
-
         // === Pass A: produce swirling Jupiter ===
         //   iChannel0 = noiseTex
         //   iChannel1 = previous frame of A
@@ -641,19 +664,19 @@
         loc = gl.getUniformLocation(progFinal, 'iChannel0');
         gl.uniform1i(loc, 0);
 
-        // iChannel1 => buffer A's swirl (for star field usage in final code)
+        // iChannel1 => stars texture (loaded from image)
         gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, nextFboA.tex);
+        gl.bindTexture(gl.TEXTURE_2D, starsTex);
         loc = gl.getUniformLocation(progFinal, 'iChannel1');
         gl.uniform1i(loc, 1);
 
-        // iChannel2 => Io texture (placeholder)
+        // iChannel2 => Io texture (loaded from image)
         gl.activeTexture(gl.TEXTURE2);
         gl.bindTexture(gl.TEXTURE_2D, ioTex);
         loc = gl.getUniformLocation(progFinal, 'iChannel2');
         gl.uniform1i(loc, 2);
 
-        // iChannel3 => nebula texture (placeholder)
+        // iChannel3 => nebula texture (loaded from image)
         gl.activeTexture(gl.TEXTURE3);
         gl.bindTexture(gl.TEXTURE_2D, nebulaTex);
         loc = gl.getUniformLocation(progFinal, 'iChannel3');
