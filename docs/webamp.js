@@ -49,44 +49,48 @@ function toggleWinamp() {
     });
 
     webamp.renderWhenReady(app).then(() => {
-      // Get the audio element manually by querying the DOM
-      const audioElement = document.querySelector("audio");
+      // Wait for Webamp to render and then query the audio element
+      setTimeout(() => {
+          const audioElement = document.querySelector("audio");
   
-      if (!audioElement) {
-          console.error("Audio element not found.");
-          return;
-      }
-  
-      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-      analyser = audioContext.createAnalyser();
-      analyser.fftSize = 256;
-      const bufferLength = analyser.frequencyBinCount;
-      dataArray = new Uint8Array(bufferLength);
-  
-      const source = audioContext.createMediaElementSource(audioElement);
-      source.connect(analyser);
-      analyser.connect(audioContext.destination);
-  
-      audioElement.addEventListener("play", () => {
-          isWebampPlaying = true;
-          console.log("Audio is playing");
-      });
-  
-      audioElement.addEventListener("pause", () => {
-          isWebampPlaying = false;
-          console.log("Audio is paused");
-      });
-  
-      // Debugging: Log audio data
-      function logAudioData() {
-          if (isWebampPlaying) {
-              analyser.getByteFrequencyData(dataArray);
-              console.log(dataArray);
+          if (!audioElement) {
+              console.error("Audio element not found. Ensure Webamp is properly rendering the audio player.");
+              return;
           }
-          requestAnimationFrame(logAudioData);
-      }
-      logAudioData();
-  });  
+  
+          // Proceed with audio analysis setup
+          const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+          analyser = audioContext.createAnalyser();
+          analyser.fftSize = 256;
+          const bufferLength = analyser.frequencyBinCount;
+          dataArray = new Uint8Array(bufferLength);
+  
+          const source = audioContext.createMediaElementSource(audioElement);
+          source.connect(analyser);
+          analyser.connect(audioContext.destination);
+  
+          audioElement.addEventListener("play", () => {
+              isWebampPlaying = true;
+              console.log("Audio is playing");
+          });
+  
+          audioElement.addEventListener("pause", () => {
+              isWebampPlaying = false;
+              console.log("Audio is paused");
+          });
+  
+          // Debugging: Log audio data
+          function logAudioData() {
+              if (isWebampPlaying) {
+                  analyser.getByteFrequencyData(dataArray);
+                  console.log(dataArray);
+              }
+              requestAnimationFrame(logAudioData);
+          }
+          logAudioData();
+      }, 500); // Add slight delay to ensure Webamp renders
+  });
+  
 
     isWebampVisible = true;
   } else {
