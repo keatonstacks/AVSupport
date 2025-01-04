@@ -49,38 +49,44 @@ function toggleWinamp() {
     });
 
     webamp.renderWhenReady(app).then(() => {
-      // Correct way to get the audio element
-      const audioElement = webamp.fileManager.getAudio();
-
+      // Get the audio element manually by querying the DOM
+      const audioElement = document.querySelector("audio");
+  
+      if (!audioElement) {
+          console.error("Audio element not found.");
+          return;
+      }
+  
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
       const bufferLength = analyser.frequencyBinCount;
       dataArray = new Uint8Array(bufferLength);
-
+  
       const source = audioContext.createMediaElementSource(audioElement);
       source.connect(analyser);
       analyser.connect(audioContext.destination);
-
-      audioElement.addEventListener('play', () => {
-        isWebampPlaying = true;
-        console.log("Audio is playing");
+  
+      audioElement.addEventListener("play", () => {
+          isWebampPlaying = true;
+          console.log("Audio is playing");
       });
-      audioElement.addEventListener('pause', () => {
-        isWebampPlaying = false;
-        console.log("Audio is paused");
+  
+      audioElement.addEventListener("pause", () => {
+          isWebampPlaying = false;
+          console.log("Audio is paused");
       });
-
+  
       // Debugging: Log audio data
       function logAudioData() {
-        if (isWebampPlaying) {
-          analyser.getByteFrequencyData(dataArray);
-          console.log(dataArray);
-        }
-        requestAnimationFrame(logAudioData);
+          if (isWebampPlaying) {
+              analyser.getByteFrequencyData(dataArray);
+              console.log(dataArray);
+          }
+          requestAnimationFrame(logAudioData);
       }
       logAudioData();
-    });
+  });  
 
     isWebampVisible = true;
   } else {
