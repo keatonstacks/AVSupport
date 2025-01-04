@@ -1,5 +1,7 @@
 let webamp = null;
 let isWebampVisible = false;  // Track Webamp visibility state
+let isWebampPlaying = false;  // Track Webamp playing state
+let analyser, dataArray;
 
 function toggleWinamp() {
   const app = document.getElementById("app");
@@ -45,7 +47,24 @@ function toggleWinamp() {
         },
       ],
     });
-    webamp.renderWhenReady(app);
+
+    webamp.renderWhenReady(app).then(() => {
+      const audioElement = webamp.getMediaElement();
+      const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+      const source = audioContext.createMediaElementSource(audioElement);
+      source.connect(analyser);
+      analyser.connect(audioContext.destination);
+
+      audioElement.addEventListener('play', () => {
+        isWebampPlaying = true;
+      });
+      audioElement.addEventListener('pause', () => {
+        isWebampPlaying = false;
+      });
+    });
+
     isWebampVisible = true;
   } else {
     if (isWebampVisible) {

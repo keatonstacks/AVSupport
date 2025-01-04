@@ -152,7 +152,7 @@
     uniform vec3 iResolution;
     uniform float iTime;
     uniform int iFrame;
-
+    uniform float uFrequency; // Declare uFrequency uniform
     out vec4 fragColor;
 
     void mainImage( out vec4 fragColor, in vec2 fragCoord )
@@ -188,6 +188,9 @@
                                 + vec2(sin(uv.y * 40.0)+1.5, 0.0) * 0.0006;
 
         vec3 sourceColor = mix(jupiterA, jupiterB, sourceMask);
+        
+        // Use uFrequency to influence the fractals
+        sourceColor *= (1.0 + uFrequency * 0.1);
 
         if(firstFrame || resolutionChange)
         {
@@ -284,7 +287,7 @@ vec2 generateSphericalUV(vec3 position, float spin) {
     float width = sqrt(1.0 - position.y * position.y);
     float generatrixX = position.x / width;
     vec2 generatrix = vec2(generatrixX, position.y);
-    vec2 uv = mod(asin(generatrix) / 3.14159 + vec2(0.5 + spin, 0.5), 1.0);
+    vec2 uv = fract(asin(generatrix) / 3.14159 + vec2(0.5 + spin, 0.5)); // Use fract
     return uv;
 }
 
@@ -325,46 +328,41 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     vec2 uv = (fragCoord / shorterSide - offset);
     vec3 lightDirection = normalize(vec3(1.0, 1.0, 0.8));
 
-    // Jupiter
-    vec4 jupiterSurfaceWithMask = generateSphereSurfaceWithMask(uv + vec2(0.2, 0.15), 0.6);
-    float jupiterLight = pow(max(dot(lightDirection, jupiterSurfaceWithMask.xyz), 0.0), 0.8);
-    vec4 jupiterAtmosphere = atmosphere(jupiterSurfaceWithMask, lightDirection, vec3(1.0, 0.7, 0.4) * 3.0, 0.2, 0.05, 0.6, 2.0);
-    float jupiterMask = clamp(jupiterSurfaceWithMask.w, 0.0, 1.0);
-    mat3 jupiterRotationMatrix = createRotationMatrix(-0.2, 0.3);
-    vec3 rotatedJupiter = jupiterRotationMatrix * (jupiterSurfaceWithMask.xyz * jupiterMask);
-    vec2 jupiterUV = generateSphericalUV(rotatedJupiter, iTime * 0.02);
-    vec2 scaledUV = jupiterUV * 2.2 + vec2(0.0, 0.8);
-    float u = fract(scaledUV.x);
-    float v = fract(scaledUV.y);
+    // Jupiter Surface and Lighting
+vec4 jupiterSurfaceWithMask = generateSphereSurfaceWithMask(uv + vec2(0.2, 0.15), 0.6);
+float jupiterLight = pow(max(dot(lightDirection, jupiterSurfaceWithMask.xyz), 0.0), 0.8);
+vec4 jupiterAtmosphere = atmosphere(jupiterSurfaceWithMask, lightDirection, vec3(1.0, 0.7, 0.4) * 3.0, 0.2, 0.05, 0.6, 2.0);
+float jupiterMask = clamp(jupiterSurfaceWithMask.w, 0.0, 1.0);
+mat3 jupiterRotationMatrix = createRotationMatrix(-0.2, 0.3);
+vec3 rotatedJupiter = jupiterRotationMatrix * (jupiterSurfaceWithMask.xyz * jupiterMask);
+vec2 jupiterUV = generateSphericalUV(rotatedJupiter, iTime * 0.02);
 
-    float blendRange = 0.05; // Increased for smoother transitions
-    float distToLeftEdge = u;
-    float distToRightEdge = 1.0 - u;
-    float minDist = min(distToLeftEdge, distToRightEdge);
-    float blendFactor = smoothstep(blendRange, 0.0, minDist);
+// Scale and Wrap UVs
+vec2 scaledUV = jupiterUV * 2.2 + vec2(0.0, 0.8);
+scaledUV = fract(scaledUV); // Ensure proper wrapping
 
-    // Sample neighboring textures for better blending
-    vec3 colorA = texture(iChannel0, vec2(u, v)).xyz;
-    vec3 colorB = texture(iChannel0, vec2(fract(u + 1.0), v)).xyz;
-    vec3 colorC = texture(iChannel0, vec2(u, fract(v + 1.0))).xyz;
-    vec3 colorD = texture(iChannel0, vec2(fract(u + 1.0), fract(v + 1.0))).xyz;
+// Texture Sampling
+vec3 colorA = texture(iChannel0, scaledUV).xyz;
+vec3 colorB = texture(iChannel0, fract(scaledUV + vec2(1.0, 0.0))).xyz;
+vec3 colorC = texture(iChannel0, fract(scaledUV + vec2(0.0, 1.0))).xyz;
+vec3 colorD = texture(iChannel0, fract(scaledUV + vec2(1.0, 1.0))).xyz;
 
-    // Noise for organic blending
-    float noise = fract(sin(dot(vec2(u, v), vec2(12.9898, 78.233))) * 43758.5453);
-    float noiseFactor = smoothstep(0.4, 0.6, noise);
+// Seamless Blending using smoothstep
+float edgeBlendX = smoothstep(0.45, 0.55, abs(fract(scaledUV.x) - 0.5));
+float edgeBlendY = smoothstep(0.45, 0.55, abs(fract(scaledUV.y) - 0.5));
 
-    // Blend the textures with noise
-    vec3 blendedTexture = mix(
-        mix(colorA, colorB, blendFactor),
-        mix(colorC, colorD, blendFactor),
-        noiseFactor
-    );
+// Combine Edges for smooth blending
+vec3 blendedTexture = mix(
+    mix(colorA, colorB, edgeBlendX),
+    mix(colorC, colorD, edgeBlendY),
+    edgeBlendX * edgeBlendY
+);
 
-    // Apply additional color adjustment to enhance the planet surface
-    vec3 jupiterTexture = pow(blendedTexture, vec3(2.2)) * vec3(1.2, 1.0, 0.9); // Subtle reddish tint
+// Apply additional color adjustment to enhance the planet surface
+vec3 jupiterTexture = pow(blendedTexture, vec3(2.2)) * vec3(1.2, 1.0, 0.9); // Subtle reddish tint
+jupiterTexture = vec3(pow(jupiterTexture.x, 3.5), pow(jupiterTexture.y, 6.0), pow(jupiterTexture.z, 8.0)) * 3.5;
 
-    jupiterTexture = vec3(pow(jupiterTexture.x, 3.5), pow(jupiterTexture.y, 6.0), pow(jupiterTexture.z, 8.0)) * 3.5;
-
+    
     // Io
     vec4 ioSurfaceWithMask = generateSphereSurfaceWithMask(uv + vec2(-0.32, -0.2), 0.07);
     float ioLight = pow(max(dot(lightDirection, ioSurfaceWithMask.xyz), 0.0), 0.4);
@@ -477,14 +475,19 @@ function createFBO(width, height) {
 
     const tex = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, tex);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+    // Enable seamless tiling
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
 
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
     return { fbo, tex };
 }
 
@@ -558,6 +561,42 @@ const starsTex = loadTexture('images/stars.png');
 let iFrame = 0;
 const startTime = performance.now();
 
+let isWebampPlaying = false;
+let analyser, dataArray;
+
+window.onload = function() {
+    // Initialize Web Audio API for audio analysis
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    analyser = audioContext.createAnalyser();
+    analyser.fftSize = 256;
+    const bufferLength = analyser.frequencyBinCount;
+    dataArray = new Uint8Array(bufferLength);
+
+    function getFrequencyData() {
+        if (analyser) {
+            analyser.getByteFrequencyData(dataArray);
+        }
+        return dataArray;
+    }
+
+    function updateShaderUniforms(gl, program) {
+        if (!isWebampPlaying) return;
+
+        const frequencyData = getFrequencyData();
+        const averageFrequency = frequencyData.length > 0 ? frequencyData.reduce((a, b) => a + b) / frequencyData.length : 0;
+
+        const frequencyUniformLocation = gl.getUniformLocation(program, 'uFrequency');
+        gl.uniform1f(frequencyUniformLocation, averageFrequency);
+    }
+    requestAnimationFrame(render);
+    const winampPlayer = document.getElementById('app');
+    winampPlayer.addEventListener('play', () => {
+        isWebampPlaying = true;
+    });
+    winampPlayer.addEventListener('pause', () => {
+        isWebampPlaying = false;
+    });
+}
 // ---------- 13) The Render Loop ----------
 function render() {
     const timeNow = performance.now();
@@ -593,6 +632,11 @@ function render() {
     loc = gl.getUniformLocation(progA, 'iChannel1');
     gl.uniform1i(loc, 1);
 
+    // Update shader uniforms with frequency data if Webamp is playing
+    if (isWebampPlaying) {
+        updateShaderUniforms(gl, progA);
+    }
+
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -614,6 +658,11 @@ function render() {
     gl.bindTexture(gl.TEXTURE_2D, nextFboA.tex);
     loc = gl.getUniformLocation(progB, 'iChannel0');
     gl.uniform1i(loc, 0);
+
+    // Update shader uniforms with frequency data if Webamp is playing
+    if (isWebampPlaying) {
+        updateShaderUniforms(gl, progB);
+    }
 
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -652,6 +701,11 @@ function render() {
     gl.bindTexture(gl.TEXTURE_2D, nebulaTex);
     loc = gl.getUniformLocation(progFinal, 'iChannel3');
     gl.uniform1i(loc, 3);
+
+    // Update shader uniforms with frequency data if Webamp is playing
+    if (isWebampPlaying) {
+        updateShaderUniforms(gl, progFinal);
+    }
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
