@@ -49,12 +49,15 @@ function toggleWinamp() {
     });
 
     webamp.renderWhenReady(app).then(() => {
-      const audioElement = webamp.audio; // Corrected method to get the audio element
+      // Correct way to get the audio element
+      const audioElement = webamp.fileManager.getAudio();
+
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
       const bufferLength = analyser.frequencyBinCount;
       dataArray = new Uint8Array(bufferLength);
+
       const source = audioContext.createMediaElementSource(audioElement);
       source.connect(analyser);
       analyser.connect(audioContext.destination);
