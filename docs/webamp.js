@@ -49,7 +49,8 @@ function toggleWinamp() {
     });
 
     webamp.renderWhenReady(app).then(() => {
-      const audioElement = webamp.getMediaElement();
+      webamp.onReady(() => {
+      const audioElement = webamp.audio;
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
@@ -64,6 +65,7 @@ function toggleWinamp() {
         isWebampPlaying = false;
       });
     });
+    });    
 
     isWebampVisible = true;
   } else {
