@@ -49,23 +49,35 @@ function toggleWinamp() {
     });
 
     webamp.renderWhenReady(app).then(() => {
-      webamp.onReady(() => {
-      const audioElement = webamp.audio;
+      const audioElement = webamp.audio; // Corrected method to get the audio element
       const audioContext = new (window.AudioContext || window.webkitAudioContext)();
       analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
+      const bufferLength = analyser.frequencyBinCount;
+      dataArray = new Uint8Array(bufferLength);
       const source = audioContext.createMediaElementSource(audioElement);
       source.connect(analyser);
       analyser.connect(audioContext.destination);
 
       audioElement.addEventListener('play', () => {
         isWebampPlaying = true;
+        console.log("Audio is playing");
       });
       audioElement.addEventListener('pause', () => {
         isWebampPlaying = false;
+        console.log("Audio is paused");
       });
+
+      // Debugging: Log audio data
+      function logAudioData() {
+        if (isWebampPlaying) {
+          analyser.getByteFrequencyData(dataArray);
+          console.log(dataArray);
+        }
+        requestAnimationFrame(logAudioData);
+      }
+      logAudioData();
     });
-    });    
 
     isWebampVisible = true;
   } else {
