@@ -2,21 +2,24 @@ let webamp = null;
 let isWebampVisible = false; // Track Webamp visibility state
 let analyser, dataArray, smoothedFrequency = 0;
 let audioContext; // Declare AudioContext globally
-let audioStream; // Global audio stream for capturing browser audio
 
 // Toggle Winamp Player
 function toggleWinamp() {
     const app = document.getElementById("app");
 
+    // Initialize or resume AudioContext
     if (!audioContext) {
-        // Initialize the AudioContext on the first interaction
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         console.log("AudioContext initialized.");
     } else if (audioContext.state === "suspended") {
-        // Resume the AudioContext if suspended
         audioContext.resume().then(() => {
             console.log("AudioContext resumed.");
         });
+    }
+
+    // Set up audio analysis when toggling Winamp
+    if (!analyser) {
+        setupAudioAnalysis();
     }
 
     if (!webamp) {
@@ -53,7 +56,7 @@ async function setupAudioAnalysis() {
             audio: true,
         });
 
-        audioStream = audioContext.createMediaStreamSource(displayStream);
+        const audioStream = audioContext.createMediaStreamSource(displayStream);
         analyser = audioContext.createAnalyser();
         analyser.fftSize = 256;
         dataArray = new Uint8Array(analyser.frequencyBinCount);
@@ -103,9 +106,3 @@ function updateShaderUniforms(gl, program) {
     loc = gl.getUniformLocation(program, "uTreble");
     gl.uniform1f(loc, treble);
 }
-
-// Initialize Analysis on Load
-window.onload = () => {
-    // Attach audio analysis setup to the play button interaction
-    document.getElementById("play-button").addEventListener("click", setupAudioAnalysis);
-};
