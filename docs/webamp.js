@@ -17,11 +17,6 @@ function toggleWinamp() {
         });
     }
 
-    // Set up audio analysis when toggling Winamp
-    if (!analyser) {
-        setupAudioAnalysis();
-    }
-
     if (!webamp) {
         // Initialize and render Webamp
         webamp = new Webamp({
@@ -34,7 +29,10 @@ function toggleWinamp() {
             ],
         });
 
-        webamp.renderWhenReady(app); // Render the Webamp UI
+        webamp.renderWhenReady(app).then(() => {
+            console.log("Webamp loaded.");
+            setupAudioAnalysisFromWebamp(); // Attach analyser to Webamp's MediaPlayer
+        });
         isWebampVisible = true;
     } else {
         // Toggle Webamp visibility
@@ -43,30 +41,37 @@ function toggleWinamp() {
     }
 }
 
-// Setup Global Browser Audio Analysis
-async function setupAudioAnalysis() {
+// Setup Audio Analysis from Webamp
+function setupAudioAnalysisFromWebamp() {
     try {
         if (!audioContext) {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
 
-        // Capture audio from the browser tab using getDisplayMedia
-        const displayStream = await navigator.mediaDevices.getDisplayMedia({
-            video: false,
-            audio: true,
-        });
+        const mediaPlayer = webamp.getMediaPlayer();
+        if (!mediaPlayer) {
+            console.error("Webamp MediaPlayer not found.");
+            return;
+        }
 
-        const audioStream = audioContext.createMediaStreamSource(displayStream);
+        const audioElement = mediaPlayer.getMediaElement();
+        if (!audioElement) {
+            console.error("Webamp MediaElement not found.");
+            return;
+        }
+
+        const audioSource = audioContext.createMediaElementSource(audioElement);
         analyser = audioContext.createAnalyser();
         analyser.fftSize = 256;
         dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-        // Connect the audio stream to the analyser
-        audioStream.connect(analyser);
+        // Connect Webamp audio to the analyser
+        audioSource.connect(analyser);
+        analyser.connect(audioContext.destination);
 
-        console.log("Global browser audio analysis setup complete.");
+        console.log("Audio analysis setup complete using Webamp MediaPlayer.");
     } catch (error) {
-        console.error("Error during global audio analysis setup:", error);
+        console.error("Error during Webamp audio analysis setup:", error);
     }
 }
 
