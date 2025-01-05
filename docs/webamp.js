@@ -42,21 +42,24 @@ async function toggleWinamp() {
         });
 
         try {
-          await webamp.renderWhenReady(app);
-          console.log("Webamp loaded.");
+            await webamp.renderWhenReady(app);
+            console.log("Webamp loaded.");
 
-          webamp.onDidInit(async () => { // Make the callback async
-              console.log("Webamp fully initialized. Setting up audio analysis.");
-              const context = await getAudioContext(); // Get the AudioContext
-              if(context){
-                  setupAudioAnalysisFromWebamp(context); // setup with the context
-              } else {
-                  console.error("Could not get audio context. Cancelling audio analysis setup")
-              }
-          });
+            setTimeout(() => {
+                console.log("Setting up audio after delay.");
+                webamp.onDidInit(async () => {
+                    console.log("Webamp fully initialized. Setting up audio analysis.");
+                    const context = await getAudioContext();
+                    if (context) {
+                        setupAudioAnalysisFromWebamp(context);
+                    } else {
+                        console.error("Could not get audio context. Cancelling audio analysis setup");
+                    }
+                });
+            }, 500);
         } catch (error) {
-            console.error("Error rendering Webamp:", error);
-            return; // Exit if rendering fails
+            console.error("Error rendering Webamp:", error.message, error.stack);
+            return;
         }
 
         isWebampVisible = true;
@@ -65,6 +68,7 @@ async function toggleWinamp() {
         isWebampVisible = !isWebampVisible;
     }
 }
+
 
 function setupAudioAnalysisFromWebamp(audioContext) {
   try {
