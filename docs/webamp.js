@@ -1,6 +1,5 @@
 let webamp = null;
 let isWebampVisible = false; // Track Webamp visibility state
-let isWebampPlaying = false; // Track Webamp playing state
 let analyser, dataArray, smoothedFrequency = 0;
 
 // Toggle Winamp Player
@@ -8,7 +7,7 @@ function toggleWinamp() {
     const app = document.getElementById("app");
 
     if (!webamp) {
-        // Initialize Webamp
+        // Initialize and render Webamp
         webamp = new Webamp({
             initialTracks: [
                 { metaData: { artist: "Pretty Lights", title: "ROADtothestars11_91.mp3" }, url: "media/ROADtothestars11_91.mp3" },
@@ -19,56 +18,30 @@ function toggleWinamp() {
             ],
         });
 
-        webamp.renderWhenReady(app).then(() => {
-            // Query the audio element directly from the DOM
-            const audioElement = document.querySelector("audio");
-
-            if (!audioElement) {
-                console.error("Audio element not found after Webamp rendered.");
-                return;
-            }
-
-            setupAudioAnalysis(audioElement);
-
-            // Set up event listeners for play and pause
-            audioElement.addEventListener("play", () => {
-                isWebampPlaying = true;
-                console.log("Audio is playing");
-            });
-
-            audioElement.addEventListener("pause", () => {
-                isWebampPlaying = false;
-                console.log("Audio is paused");
-            });
-        });
-
+        webamp.renderWhenReady(app); // No audio analysis logic tied to Webamp
         isWebampVisible = true;
     } else {
         // Toggle Webamp visibility
-        if (isWebampVisible) {
-            webamp.close();
-            isWebampVisible = false;
-        } else {
-            webamp.reopen();
-            isWebampVisible = true;
-        }
+        isWebampVisible ? webamp.close() : webamp.reopen();
+        isWebampVisible = !isWebampVisible;
     }
 }
 
-// Setup Audio Analysis
-function setupAudioAnalysis(audioElement) {
+// Setup Audio Analysis (Browser-Wide)
+function setupAudioAnalysis() {
     try {
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
         analyser = audioContext.createAnalyser();
         analyser.fftSize = 256;
-        const bufferLength = analyser.frequencyBinCount;
-        dataArray = new Uint8Array(bufferLength);
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-        const source = audioContext.createMediaElementSource(audioElement);
+        // Capture all browser audio
+        const destination = audioContext.destination;
+        const source = audioContext.createMediaStreamSource(new MediaStream());
         source.connect(analyser);
-        analyser.connect(audioContext.destination);
+        analyser.connect(destination);
 
-        console.log("Audio analysis setup complete.");
+        console.log("Browser-wide audio analysis setup complete.");
     } catch (error) {
         console.error("Error during audio analysis setup:", error);
     }
@@ -97,7 +70,7 @@ function getFrequencyBands() {
 
 // Update Shader Uniforms
 function updateShaderUniforms(gl, program) {
-    if (!isWebampPlaying || !analyser) return; // Only proceed if Webamp is actively playing
+    if (!analyser) return; // Only proceed if analyser is available
 
     const { smoothedFrequency, bass, midrange, treble } = getFrequencyBands();
 
@@ -113,3 +86,6 @@ function updateShaderUniforms(gl, program) {
     loc = gl.getUniformLocation(program, "uTreble");
     gl.uniform1f(loc, treble);
 }
+
+// Initialize Analysis on Load
+window.onload = setupAudioAnalysis;

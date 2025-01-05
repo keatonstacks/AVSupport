@@ -615,25 +615,25 @@ function render() {
     gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
     setupVertexAttrib(progA);
 
-    let loc = gl.getUniformLocation(progA, 'iTime');
+    let loc = gl.getUniformLocation(progA, "iTime");
     gl.uniform1f(loc, iTime);
-    loc = gl.getUniformLocation(progA, 'iResolution');
+    loc = gl.getUniformLocation(progA, "iResolution");
     gl.uniform3f(loc, BUFFER_WIDTH, BUFFER_HEIGHT, 1.0);
-    loc = gl.getUniformLocation(progA, 'iFrame');
+    loc = gl.getUniformLocation(progA, "iFrame");
     gl.uniform1i(loc, iFrame);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, noiseTex);
-    loc = gl.getUniformLocation(progA, 'iChannel0');
+    loc = gl.getUniformLocation(progA, "iChannel0");
     gl.uniform1i(loc, 0);
 
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, prevFboA.tex);
-    loc = gl.getUniformLocation(progA, 'iChannel1');
+    loc = gl.getUniformLocation(progA, "iChannel1");
     gl.uniform1i(loc, 1);
 
-    // Update shader uniforms with frequency data if Webamp is playing
-    if (isWebampPlaying) {
+    // Update shader uniforms with frequency data
+    if (analyser) {
         updateShaderUniforms(gl, progA);
     }
 
@@ -651,16 +651,16 @@ function render() {
     gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
     setupVertexAttrib(progB);
 
-    loc = gl.getUniformLocation(progB, 'iResolution');
+    loc = gl.getUniformLocation(progB, "iResolution");
     gl.uniform3f(loc, BUFFER_WIDTH, BUFFER_HEIGHT, 1.0);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, nextFboA.tex);
-    loc = gl.getUniformLocation(progB, 'iChannel0');
+    loc = gl.getUniformLocation(progB, "iChannel0");
     gl.uniform1i(loc, 0);
 
-    // Update shader uniforms with frequency data if Webamp is playing
-    if (isWebampPlaying) {
+    // Update shader uniforms with frequency data
+    if (analyser) {
         updateShaderUniforms(gl, progB);
     }
 
@@ -677,33 +677,33 @@ function render() {
     gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
     setupVertexAttrib(progFinal);
 
-    loc = gl.getUniformLocation(progFinal, 'iResolution');
+    loc = gl.getUniformLocation(progFinal, "iResolution");
     gl.uniform3f(loc, canvas.width, canvas.height, 1.0);
-    loc = gl.getUniformLocation(progFinal, 'iTime');
+    loc = gl.getUniformLocation(progFinal, "iTime");
     gl.uniform1f(loc, iTime);
 
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, fboB.tex);
-    loc = gl.getUniformLocation(progFinal, 'iChannel0');
+    loc = gl.getUniformLocation(progFinal, "iChannel0");
     gl.uniform1i(loc, 0);
 
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, starsTex);
-    loc = gl.getUniformLocation(progFinal, 'iChannel1');
+    loc = gl.getUniformLocation(progFinal, "iChannel1");
     gl.uniform1i(loc, 1);
 
     gl.activeTexture(gl.TEXTURE2);
     gl.bindTexture(gl.TEXTURE_2D, ioTex);
-    loc = gl.getUniformLocation(progFinal, 'iChannel2');
+    loc = gl.getUniformLocation(progFinal, "iChannel2");
     gl.uniform1i(loc, 2);
 
     gl.activeTexture(gl.TEXTURE3);
     gl.bindTexture(gl.TEXTURE_2D, nebulaTex);
-    loc = gl.getUniformLocation(progFinal, 'iChannel3');
+    loc = gl.getUniformLocation(progFinal, "iChannel3");
     gl.uniform1i(loc, 3);
 
-    // Update shader uniforms with frequency data if Webamp is playing
-    if (isWebampPlaying) {
+    // Update shader uniforms with frequency data
+    if (analyser) {
         updateShaderUniforms(gl, progFinal);
     }
 
