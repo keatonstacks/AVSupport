@@ -598,7 +598,6 @@ function render() {
 
     // Update shader uniforms with frequency data
     if (analyser) {
-        console.log("Analyser active, updating shader uniforms...");
         updateShaderUniforms(gl, progA);
     }
 
@@ -626,7 +625,6 @@ function render() {
 
     // Update shader uniforms with frequency data
     if (analyser) {
-        console.log("Analyser active, updating shader uniforms...");
         updateShaderUniforms(gl, progB);
     }
 
