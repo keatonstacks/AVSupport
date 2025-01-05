@@ -28,21 +28,22 @@ async function getAudioContext() {
     return audioContext;
 }
 
-// Poll for the audio element if not immediately available
-async function waitForAudioElement(timeout = 5000) {
-    const start = Date.now();
-    return new Promise((resolve, reject) => {
-        const interval = setInterval(() => {
+async function pollForAudioElement(timeout = 5000, interval = 100) {
+    const startTime = Date.now();
+
+    return new Promise((resolve) => {
+        const checkAudioElement = () => {
             const audioElement = document.querySelector("audio");
             if (audioElement) {
-                clearInterval(interval);
                 resolve(audioElement);
+            } else if (Date.now() - startTime > timeout) {
+                resolve(null); // Timeout exceeded, return null
+            } else {
+                setTimeout(checkAudioElement, interval); // Retry after interval
             }
-            if (Date.now() - start > timeout) {
-                clearInterval(interval);
-                reject(new Error("Audio element not found within timeout."));
-            }
-        }, 100);
+        };
+
+        checkAudioElement();
     });
 }
 
@@ -64,10 +65,12 @@ async function toggleWinamp() {
         try {
             await webamp.renderWhenReady(app);
             console.log("Webamp rendered successfully.");
-
-            // Wait for the audio element
-            const audioElement = await waitForAudioElement();
-            console.log("Audio element found:", audioElement);
+            
+            // Poll for the audio element
+            const audioElement = await pollForAudioElement(5000); // Wait up to 5 seconds
+            if (!audioElement) {
+                throw new Error("Audio element not found within timeout.");
+            }
 
             // Set up audio analysis
             const context = await getAudioContext();
@@ -78,17 +81,13 @@ async function toggleWinamp() {
             }
         } catch (error) {
             console.error("Error rendering Webamp:", error.message);
+            return;
         }
 
         isWebampVisible = true;
     } else {
-        if (isWebampVisible) {
-            webamp.close();
-            isWebampVisible = false;
-        } else {
-            webamp.reopen();
-            isWebampVisible = true;
-        }
+        isWebampVisible ? webamp.close() : webamp.reopen();
+        isWebampVisible = !isWebampVisible;
     }
 }
 
