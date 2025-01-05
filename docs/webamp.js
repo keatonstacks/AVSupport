@@ -2,6 +2,7 @@ let webamp = null;
 let isWebampVisible = false; // Track Webamp visibility state
 let analyser, dataArray, smoothedFrequency = 0;
 let audioContext; // Declare AudioContext globally
+let audioStream; // Global audio stream for capturing browser audio
 
 // Toggle Winamp Player
 function toggleWinamp() {
@@ -11,7 +12,6 @@ function toggleWinamp() {
         // Initialize the AudioContext on the first interaction
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         console.log("AudioContext initialized.");
-        setupAudioAnalysis(); // Call setup immediately after initialization
     } else if (audioContext.state === "suspended") {
         // Resume the AudioContext if suspended
         audioContext.resume().then(() => {
@@ -40,20 +40,30 @@ function toggleWinamp() {
     }
 }
 
-// Setup Audio Analysis
-function setupAudioAnalysis() {
+// Setup Global Browser Audio Analysis
+async function setupAudioAnalysis() {
     try {
         if (!audioContext) {
-            console.warn("AudioContext is not initialized. Cannot set up audio analysis.");
-            return;
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
+
+        // Capture audio from the browser tab using getDisplayMedia
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({
+            video: false,
+            audio: true,
+        });
+
+        audioStream = audioContext.createMediaStreamSource(displayStream);
         analyser = audioContext.createAnalyser();
         analyser.fftSize = 256;
         dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-        console.log("Audio analysis setup complete.");
+        // Connect the audio stream to the analyser
+        audioStream.connect(analyser);
+
+        console.log("Global browser audio analysis setup complete.");
     } catch (error) {
-        console.error("Error during audio analysis setup:", error);
+        console.error("Error during global audio analysis setup:", error);
     }
 }
 
@@ -80,7 +90,7 @@ function updateShaderUniforms(gl, program) {
     if (!analyser) return;
 
     const { smoothedFrequency, bass, midrange, treble } = getFrequencyBands();
-    console.log("Frequency Data:", { smoothedFrequency, bass, midrange, treble });
+
     let loc = gl.getUniformLocation(program, "uFrequency");
     gl.uniform1f(loc, smoothedFrequency);
 
@@ -94,17 +104,8 @@ function updateShaderUniforms(gl, program) {
     gl.uniform1f(loc, treble);
 }
 
-// Attach Event Listener to a User Gesture
-document.addEventListener('click', () => {
-    if (!audioContext) {
-        // Initialize the AudioContext on the first user interaction
-        audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        setupAudioAnalysis();
-        console.log("AudioContext initialized on user gesture.");
-    } else if (audioContext.state === "suspended") {
-        // Resume AudioContext on user gesture
-        audioContext.resume().then(() => {
-            console.log("AudioContext resumed on user gesture.");
-        });
-    }
-});
+// Initialize Analysis on Load
+window.onload = () => {
+    // Attach audio analysis setup to the play button interaction
+    document.getElementById("play-button").addEventListener("click", setupAudioAnalysis);
+};
