@@ -3,14 +3,15 @@ let isWebampVisible = false;
 let analyser, dataArray, smoothedFrequency = 0;
 let audioContext;
 
+// Initialize or resume AudioContext
 async function getAudioContext() {
     if (!audioContext) {
         try {
-            audioContext = new AudioContext(); // Modern way
+            audioContext = new AudioContext();
             console.log("AudioContext initialized.");
         } catch (error) {
             console.error("Error creating AudioContext:", error);
-            return null; // Return null to indicate failure
+            return null;
         }
     }
 
@@ -20,13 +21,32 @@ async function getAudioContext() {
             console.log("AudioContext resumed.");
         } catch (error) {
             console.error("Error resuming AudioContext:", error);
-            return null; // Return null to indicate failure
+            return null;
         }
     }
 
-    return audioContext; // Return the AudioContext instance
+    return audioContext;
 }
 
+// Poll for the audio element if not immediately available
+async function waitForAudioElement(timeout = 5000) {
+    const start = Date.now();
+    return new Promise((resolve, reject) => {
+        const interval = setInterval(() => {
+            const audioElement = document.querySelector("audio");
+            if (audioElement) {
+                clearInterval(interval);
+                resolve(audioElement);
+            }
+            if (Date.now() - start > timeout) {
+                clearInterval(interval);
+                reject(new Error("Audio element not found within timeout."));
+            }
+        }, 100);
+    });
+}
+
+// Toggle Webamp
 async function toggleWinamp() {
     const app = document.getElementById("app");
 
@@ -45,12 +65,9 @@ async function toggleWinamp() {
             await webamp.renderWhenReady(app);
             console.log("Webamp rendered successfully.");
 
-            // Ensure the audio element is present
-            const audioElement = document.querySelector("audio");
-            if (!audioElement) {
-                console.error("Audio element not found in Webamp.");
-                return;
-            }
+            // Wait for the audio element
+            const audioElement = await waitForAudioElement();
+            console.log("Audio element found:", audioElement);
 
             // Set up audio analysis
             const context = await getAudioContext();
@@ -60,17 +77,22 @@ async function toggleWinamp() {
                 console.error("Could not get AudioContext. Skipping audio analysis.");
             }
         } catch (error) {
-            console.error("Error rendering Webamp:", error.message, error.stack);
-            return;
+            console.error("Error rendering Webamp:", error.message);
         }
 
         isWebampVisible = true;
     } else {
-        isWebampVisible ? webamp.close() : webamp.reopen();
-        isWebampVisible = !isWebampVisible;
+        if (isWebampVisible) {
+            webamp.close();
+            isWebampVisible = false;
+        } else {
+            webamp.reopen();
+            isWebampVisible = true;
+        }
     }
 }
 
+// Set up audio analysis
 function setupAudioAnalysisFromWebamp(audioContext, audioElement) {
     try {
         if (audioElement.source) {
@@ -94,6 +116,7 @@ function setupAudioAnalysisFromWebamp(audioContext, audioElement) {
     }
 }
 
+// Get frequency bands
 function getFrequencyBands() {
     if (!analyser) return { smoothedFrequency: 0, bass: 0, midrange: 0, treble: 0 };
 
@@ -111,6 +134,7 @@ function getFrequencyBands() {
     return { smoothedFrequency, bass, midrange, treble };
 }
 
+// Update shader uniforms
 function updateShaderUniforms(gl, program) {
     if (!analyser) return;
 
