@@ -20,7 +20,8 @@ function toggleWinamp() {
         });
 
         webamp.renderWhenReady(app).then(() => {
-            const audioElement = webamp.getMediaElement();
+            // Query the audio element directly from the DOM
+            const audioElement = document.querySelector("audio");
 
             if (!audioElement) {
                 console.error("Audio element not found after Webamp rendered.");
@@ -28,17 +29,17 @@ function toggleWinamp() {
             }
 
             setupAudioAnalysis(audioElement);
-        });
 
-        // Webamp Event Listeners
-        webamp.on("play", () => {
-            isWebampPlaying = true;
-            console.log("Audio is playing");
-        });
+            // Set up event listeners for play and pause
+            audioElement.addEventListener("play", () => {
+                isWebampPlaying = true;
+                console.log("Audio is playing");
+            });
 
-        webamp.on("pause", () => {
-            isWebampPlaying = false;
-            console.log("Audio is paused");
+            audioElement.addEventListener("pause", () => {
+                isWebampPlaying = false;
+                console.log("Audio is paused");
+            });
         });
 
         isWebampVisible = true;
@@ -96,20 +97,19 @@ function getFrequencyBands() {
 
 // Update Shader Uniforms
 function updateShaderUniforms(gl, program) {
-  if (!isWebampPlaying || !analyser) return; // Only proceed if Webamp is actively playing
+    if (!isWebampPlaying || !analyser) return; // Only proceed if Webamp is actively playing
 
-  const { smoothedFrequency, bass, midrange, treble } = getFrequencyBands();
+    const { smoothedFrequency, bass, midrange, treble } = getFrequencyBands();
 
-  let loc = gl.getUniformLocation(program, "uFrequency");
-  gl.uniform1f(loc, smoothedFrequency);
+    let loc = gl.getUniformLocation(program, "uFrequency");
+    gl.uniform1f(loc, smoothedFrequency);
 
-  loc = gl.getUniformLocation(program, "uBass");
-  gl.uniform1f(loc, bass);
+    loc = gl.getUniformLocation(program, "uBass");
+    gl.uniform1f(loc, bass);
 
-  loc = gl.getUniformLocation(program, "uMidrange");
-  gl.uniform1f(loc, midrange);
+    loc = gl.getUniformLocation(program, "uMidrange");
+    gl.uniform1f(loc, midrange);
 
-  loc = gl.getUniformLocation(program, "uTreble");
-  gl.uniform1f(loc, treble);
+    loc = gl.getUniformLocation(program, "uTreble");
+    gl.uniform1f(loc, treble);
 }
-
