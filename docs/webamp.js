@@ -3,8 +3,21 @@ let isWebampVisible = false; // Track Webamp visibility state
 let analyser, dataArray, smoothedFrequency = 0;
 
 // Toggle Winamp Player
+let audioContext; // Declare AudioContext globally
+
 function toggleWinamp() {
     const app = document.getElementById("app");
+
+    if (!audioContext) {
+        // Initialize the AudioContext on the first interaction
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        console.log("AudioContext initialized.");
+    } else if (audioContext.state === "suspended") {
+        // Resume the AudioContext if suspended
+        audioContext.resume().then(() => {
+            console.log("AudioContext resumed.");
+        });
+    }
 
     if (!webamp) {
         // Initialize and render Webamp
@@ -18,7 +31,7 @@ function toggleWinamp() {
             ],
         });
 
-        webamp.renderWhenReady(app); // No audio analysis logic tied to Webamp
+        webamp.renderWhenReady(app); // Render the Webamp UI
         isWebampVisible = true;
     } else {
         // Toggle Webamp visibility
