@@ -28,6 +28,7 @@ async function getAudioContext() {
     return audioContext;
 }
 
+// Poll for the audio element with a timeout
 async function pollForAudioElement(timeout = 5000, interval = 100) {
     const startTime = Date.now();
 
@@ -39,7 +40,7 @@ async function pollForAudioElement(timeout = 5000, interval = 100) {
             } else if (Date.now() - startTime > timeout) {
                 resolve(null); // Timeout exceeded, return null
             } else {
-                setTimeout(checkAudioElement, interval); // Retry after interval
+                setTimeout(checkAudioElement, interval);
             }
         };
 
@@ -67,7 +68,7 @@ async function toggleWinamp() {
             console.log("Webamp rendered successfully.");
             
             // Poll for the audio element
-            const audioElement = await pollForAudioElement(5000); // Wait up to 5 seconds
+            const audioElement = await pollForAudioElement(5000);
             if (!audioElement) {
                 throw new Error("Audio element not found within timeout.");
             }
@@ -86,7 +87,11 @@ async function toggleWinamp() {
 
         isWebampVisible = true;
     } else {
-        isWebampVisible ? webamp.close() : webamp.reopen();
+        if (isWebampVisible) {
+            webamp.close();
+        } else {
+            webamp.reopen();
+        }
         isWebampVisible = !isWebampVisible;
     }
 }
