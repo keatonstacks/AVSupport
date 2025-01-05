@@ -11,6 +11,7 @@ function toggleWinamp() {
         // Initialize the AudioContext on the first interaction
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         console.log("AudioContext initialized.");
+        setupAudioAnalysis(); // Call setup immediately after initialization
     } else if (audioContext.state === "suspended") {
         // Resume the AudioContext if suspended
         audioContext.resume().then(() => {
@@ -43,7 +44,8 @@ function toggleWinamp() {
 function setupAudioAnalysis() {
     try {
         if (!audioContext) {
-            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            console.warn("AudioContext is not initialized. Cannot set up audio analysis.");
+            return;
         }
         analyser = audioContext.createAnalyser();
         analyser.fftSize = 256;
@@ -92,5 +94,17 @@ function updateShaderUniforms(gl, program) {
     gl.uniform1f(loc, treble);
 }
 
-// Initialize Analysis on Load
-window.onload = setupAudioAnalysis;
+// Attach Event Listener to a User Gesture
+document.addEventListener('click', () => {
+    if (!audioContext) {
+        // Initialize the AudioContext on the first user interaction
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        setupAudioAnalysis();
+        console.log("AudioContext initialized on user gesture.");
+    } else if (audioContext.state === "suspended") {
+        // Resume AudioContext on user gesture
+        audioContext.resume().then(() => {
+            console.log("AudioContext resumed on user gesture.");
+        });
+    }
+});
