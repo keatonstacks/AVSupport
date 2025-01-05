@@ -43,20 +43,22 @@ async function toggleWinamp() {
 
         try {
             await webamp.renderWhenReady(app);
-            console.log("Webamp loaded.");
+            console.log("Webamp rendered successfully.");
 
-            setTimeout(() => {
-                console.log("Setting up audio after delay.");
-                webamp.onDidInit(async () => {
-                    console.log("Webamp fully initialized. Setting up audio analysis.");
-                    const context = await getAudioContext();
-                    if (context) {
-                        setupAudioAnalysisFromWebamp(context);
-                    } else {
-                        console.error("Could not get audio context. Cancelling audio analysis setup");
-                    }
-                });
-            }, 500);
+            // Ensure the audio element is present
+            const audioElement = document.querySelector("audio");
+            if (!audioElement) {
+                console.error("Audio element not found in Webamp.");
+                return;
+            }
+
+            // Set up audio analysis
+            const context = await getAudioContext();
+            if (context) {
+                setupAudioAnalysisFromWebamp(context, audioElement);
+            } else {
+                console.error("Could not get AudioContext. Skipping audio analysis.");
+            }
         } catch (error) {
             console.error("Error rendering Webamp:", error.message, error.stack);
             return;
@@ -69,33 +71,27 @@ async function toggleWinamp() {
     }
 }
 
+function setupAudioAnalysisFromWebamp(audioContext, audioElement) {
+    try {
+        if (audioElement.source) {
+            console.log("Audio source already created. Skipping.");
+            return;
+        }
 
-function setupAudioAnalysisFromWebamp(audioContext) {
-  try {
-      const audioElement = webamp.getMediaElement();
-      if (!audioElement) {
-          console.error("Webamp MediaElement not found.");
-          return;
-      }
+        const audioSource = audioContext.createMediaElementSource(audioElement);
+        audioElement.source = audioSource;
 
-      if (audioElement.source) {
-          console.log("Audio source already created. Skipping.");
-          return;
-      }
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 256;
+        dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-      const audioSource = audioContext.createMediaElementSource(audioElement);
-      audioElement.source = audioSource;
-      analyser = audioContext.createAnalyser();
-      analyser.fftSize = 256;
-      dataArray = new Uint8Array(analyser.frequencyBinCount);
+        audioSource.connect(analyser);
+        analyser.connect(audioContext.destination);
 
-      audioSource.connect(analyser);
-      analyser.connect(audioContext.destination);
-
-      console.log("Audio analysis setup complete.");
-  } catch (error) {
-      console.error("Error during Webamp audio analysis setup:", error);
-  }
+        console.log("Audio analysis setup complete.");
+    } catch (error) {
+        console.error("Error during Webamp audio analysis setup:", error);
+    }
 }
 
 function getFrequencyBands() {
