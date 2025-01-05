@@ -1,7 +1,25 @@
 let webamp = null;
 let isWebampVisible = false;
 let analyser, dataArray, smoothedFrequency = 0;
-let audioContext;
+
+function updateAudioAnalysis() {
+    if (!analyser) return;
+
+    // Fetch frequency data
+    analyser.getByteFrequencyData(dataArray);
+
+    // Example of calculating average frequency
+    const total = dataArray.reduce((sum, value) => sum + value, 0);
+    const avgFrequency = total / dataArray.length;
+
+    smoothedFrequency = smoothedFrequency * 0.9 + avgFrequency * 0.1;
+
+    // Pass frequency data to the shader or any other visualizer
+    updateShaderUniforms(gl, program);
+
+    // Continue the loop
+    requestAnimationFrame(updateAudioAnalysis);
+}
 
 async function toggleWinamp() {
     const app = document.getElementById("app");
@@ -9,7 +27,7 @@ async function toggleWinamp() {
     if (!webamp) {
         webamp = new Webamp({
             initialTracks: [
-                { metaData: { artist: "Pretty Lights", title: "ROADtothestars11_91.mp3" }, url: "media/ROADtothestars11_91.mp3" },
+                { metaData: { artist: "Pretty Lights", title: "Road to the Stars" }, url: "media/ROADtothestars11_91.mp3" },
                 { metaData: { artist: "Pretty Lights", title: "Where Are You Going" }, url: "media/WhereAreYouGoing_sum1dB_013124.mp3" },
                 { metaData: { artist: "Pretty Lights", title: "New Heights" }, url: "media/NEWHEIGHTS_sum2db_012224.mp3" },
                 { metaData: { artist: "Pretty Lights", title: "How Can You Lose" }, url: "media/HOWCANYOULOSE_SEARCHING2.mp3" },
@@ -21,11 +39,13 @@ async function toggleWinamp() {
             await webamp.renderWhenReady(app);
             console.log("Webamp rendered successfully.");
 
-            // Attach event listener for playback
-            webamp.on("play", () => {
-                console.log("Playback started. Attempting to set up audio analysis.");
-                setupAudioAnalysisFromWebamp();
-            });
+            const media = webamp.media;
+            if (media && media._analyser) {
+                setupAudioAnalysis(media._analyser);
+                requestAnimationFrame(updateAudioAnalysis); // Start the analysis loop
+            } else {
+                console.error("AnalyserNode not found in Webamp's media.");
+            }
         } catch (error) {
             console.error("Error rendering Webamp:", error.message);
             return;
@@ -38,33 +58,34 @@ async function toggleWinamp() {
     }
 }
 
-function setupAudioAnalysisFromWebamp() {
+function setupAudioAnalysis(analyserNode) {
     try {
-        if (!webamp.audioManager) {
-            console.error("Webamp AudioManager not available.");
-            return;
-        }
-
-        // Get Webamp's AudioContext
-        const webampAudioContext = webamp.audioManager.audioContext;
-        if (!webampAudioContext) {
-            console.error("Webamp AudioContext not found.");
-            return;
-        }
-
-        const webampAnalyser = webamp.audioManager.getAnalyser();
-        if (!webampAnalyser) {
-            console.error("Webamp Analyser not found.");
-            return;
-        }
-
-        analyser = webampAnalyser;
+        analyser = analyserNode;
+        analyser.fftSize = 256;
         dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-        console.log("Audio analysis setup complete using Webamp AudioManager.");
+        console.log("Audio analysis setup complete.");
     } catch (error) {
-        console.error("Error during Webamp audio analysis setup:", error);
+        console.error("Error during audio analysis setup:", error);
     }
+}
+
+function updateShaderUniforms(gl, program) {
+    if (!analyser) return;
+
+    const { smoothedFrequency, bass, midrange, treble } = getFrequencyBands();
+
+    let loc = gl.getUniformLocation(program, "uFrequency");
+    gl.uniform1f(loc, smoothedFrequency);
+
+    loc = gl.getUniformLocation(program, "uBass");
+    gl.uniform1f(loc, bass);
+
+    loc = gl.getUniformLocation(program, "uMidrange");
+    gl.uniform1f(loc, midrange);
+
+    loc = gl.getUniformLocation(program, "uTreble");
+    gl.uniform1f(loc, treble);
 }
 
 function getFrequencyBands() {
@@ -82,23 +103,4 @@ function getFrequencyBands() {
     const treble = dataArray.slice(100).reduce((sum, value) => sum + value, 0) / (dataArray.length - 100);
 
     return { smoothedFrequency, bass, midrange, treble };
-}
-
-// Update shader uniforms
-function updateShaderUniforms(gl, program) {
-    if (!analyser) return;
-
-    const { smoothedFrequency, bass, midrange, treble } = getFrequencyBands();
-
-    let loc = gl.getUniformLocation(program, "uFrequency");
-    gl.uniform1f(loc, smoothedFrequency);
-
-    loc = gl.getUniformLocation(program, "uBass");
-    gl.uniform1f(loc, bass);
-
-    loc = gl.getUniformLocation(program, "uMidrange");
-    gl.uniform1f(loc, midrange);
-
-    loc = gl.getUniformLocation(program, "uTreble");
-    gl.uniform1f(loc, treble);
 }

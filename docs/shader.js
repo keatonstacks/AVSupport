@@ -622,10 +622,27 @@ function render() {
     loc = gl.getUniformLocation(progB, "iChannel0");
     gl.uniform1i(loc, 0);
 
-    // Update shader uniforms with frequency data
-    if (analyser && dataArray) { // Check if analyser AND dataArray are initialized
-        updateShaderUniforms(gl, program);
-    }
+// Update shader uniforms with frequency data
+if (analyser && dataArray) {
+    // Process frequency data
+    analyser.getByteFrequencyData(dataArray);
+
+    // Calculate frequency metrics
+    const total = dataArray.reduce((sum, value) => sum + value, 0);
+    const avgFrequency = total / dataArray.length;
+    smoothedFrequency = smoothedFrequency * 0.9 + avgFrequency * 0.1;
+
+    const bass = dataArray.slice(0, 20).reduce((sum, value) => sum + value, 0) / 20;
+    const midrange = dataArray.slice(20, 100).reduce((sum, value) => sum + value, 0) / 80;
+    const treble = dataArray.slice(100).reduce((sum, value) => sum + value, 0) / (dataArray.length - 100);
+
+    // Debugging (optional): Log frequency bands
+    console.log("Frequency Bands:", { smoothedFrequency, bass, midrange, treble });
+
+    // Update shader uniforms with the calculated values
+    updateShaderUniforms(gl, program, { smoothedFrequency, bass, midrange, treble });
+}
+
 
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -666,9 +683,27 @@ function render() {
     gl.uniform1i(loc, 3);
 
     // Update shader uniforms with frequency data
-    if (analyser) {
-        updateShaderUniforms(gl, progFinal);
-    }
+// Update shader uniforms with frequency data
+if (analyser && dataArray) {
+    // Process frequency data
+    analyser.getByteFrequencyData(dataArray);
+
+    // Calculate frequency metrics
+    const total = dataArray.reduce((sum, value) => sum + value, 0);
+    const avgFrequency = total / dataArray.length;
+    smoothedFrequency = smoothedFrequency * 0.9 + avgFrequency * 0.1;
+
+    const bass = dataArray.slice(0, 20).reduce((sum, value) => sum + value, 0) / 20;
+    const midrange = dataArray.slice(20, 100).reduce((sum, value) => sum + value, 0) / 80;
+    const treble = dataArray.slice(100).reduce((sum, value) => sum + value, 0) / (dataArray.length - 100);
+
+    // Debugging (optional): Log frequency bands
+    console.log("Frequency Bands:", { smoothedFrequency, bass, midrange, treble });
+
+    // Update shader uniforms with the calculated values
+    updateShaderUniforms(gl, program, { smoothedFrequency, bass, midrange, treble });
+}
+
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT);
