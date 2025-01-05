@@ -561,42 +561,6 @@ const starsTex = loadTexture('images/stars.png');
 let iFrame = 0;
 const startTime = performance.now();
 
-let isWebampPlaying = false;
-let analyser, dataArray;
-
-window.onload = function() {
-    // Initialize Web Audio API for audio analysis
-    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-    analyser = audioContext.createAnalyser();
-    analyser.fftSize = 256;
-    const bufferLength = analyser.frequencyBinCount;
-    dataArray = new Uint8Array(bufferLength);
-
-    function getFrequencyData() {
-        if (analyser) {
-            analyser.getByteFrequencyData(dataArray);
-        }
-        return dataArray;
-    }
-
-    function updateShaderUniforms(gl, program) {
-        if (!isWebampPlaying) return;
-
-        const frequencyData = getFrequencyData();
-        const averageFrequency = frequencyData.length > 0 ? frequencyData.reduce((a, b) => a + b) / frequencyData.length : 0;
-
-        const frequencyUniformLocation = gl.getUniformLocation(program, 'uFrequency');
-        gl.uniform1f(frequencyUniformLocation, averageFrequency);
-    }
-    requestAnimationFrame(render);
-    const winampPlayer = document.getElementById('app');
-    winampPlayer.addEventListener('play', () => {
-        isWebampPlaying = true;
-    });
-    winampPlayer.addEventListener('pause', () => {
-        isWebampPlaying = false;
-    });
-}
 // ---------- 13) The Render Loop ----------
 function render() {
     const timeNow = performance.now();
@@ -634,6 +598,7 @@ function render() {
 
     // Update shader uniforms with frequency data
     if (analyser) {
+        console.log("Analyser active, updating shader uniforms...");
         updateShaderUniforms(gl, progA);
     }
 
@@ -661,6 +626,7 @@ function render() {
 
     // Update shader uniforms with frequency data
     if (analyser) {
+        console.log("Analyser active, updating shader uniforms...");
         updateShaderUniforms(gl, progB);
     }
 

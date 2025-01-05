@@ -1,10 +1,9 @@
 let webamp = null;
 let isWebampVisible = false; // Track Webamp visibility state
 let analyser, dataArray, smoothedFrequency = 0;
-
-// Toggle Winamp Player
 let audioContext; // Declare AudioContext globally
 
+// Toggle Winamp Player
 function toggleWinamp() {
     const app = document.getElementById("app");
 
@@ -40,21 +39,17 @@ function toggleWinamp() {
     }
 }
 
-// Setup Audio Analysis (Browser-Wide)
+// Setup Audio Analysis
 function setupAudioAnalysis() {
     try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
         analyser = audioContext.createAnalyser();
         analyser.fftSize = 256;
         dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-        // Capture all browser audio
-        const destination = audioContext.destination;
-        const source = audioContext.createMediaStreamSource(new MediaStream());
-        source.connect(analyser);
-        analyser.connect(destination);
-
-        console.log("Browser-wide audio analysis setup complete.");
+        console.log("Audio analysis setup complete.");
     } catch (error) {
         console.error("Error during audio analysis setup:", error);
     }
@@ -66,14 +61,11 @@ function getFrequencyBands() {
 
     analyser.getByteFrequencyData(dataArray);
 
-    // Calculate average frequency
     const total = dataArray.reduce((sum, value) => sum + value, 0);
     const avgFrequency = total / dataArray.length;
 
-    // Smooth the frequency to avoid abrupt changes
     smoothedFrequency = smoothedFrequency * 0.9 + avgFrequency * 0.1;
 
-    // Extract specific frequency bands
     const bass = dataArray.slice(0, 20).reduce((sum, value) => sum + value, 0) / 20;
     const midrange = dataArray.slice(20, 100).reduce((sum, value) => sum + value, 0) / 80;
     const treble = dataArray.slice(100).reduce((sum, value) => sum + value, 0) / (dataArray.length - 100);
@@ -83,7 +75,7 @@ function getFrequencyBands() {
 
 // Update Shader Uniforms
 function updateShaderUniforms(gl, program) {
-    if (!analyser) return; // Only proceed if analyser is available
+    if (!analyser) return;
 
     const { smoothedFrequency, bass, midrange, treble } = getFrequencyBands();
 
