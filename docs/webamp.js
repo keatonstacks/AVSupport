@@ -80,7 +80,7 @@ function updateShaderUniforms(gl, program) {
     if (!analyser) return;
 
     const { smoothedFrequency, bass, midrange, treble } = getFrequencyBands();
-
+    console.log("Frequency Data:", { smoothedFrequency, bass, midrange, treble });
     let loc = gl.getUniformLocation(program, "uFrequency");
     gl.uniform1f(loc, smoothedFrequency);
 
