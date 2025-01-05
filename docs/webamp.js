@@ -1,24 +1,25 @@
 let webamp = null;
-let isWebampVisible = false; // Track Webamp visibility state
+let isWebampVisible = false;
 let analyser, dataArray, smoothedFrequency = 0;
-let audioContext; // Declare AudioContext globally
+let audioContext;
 
-// Toggle Winamp Player
-function toggleWinamp() {
+async function toggleWinamp() {
     const app = document.getElementById("app");
 
-    // Initialize or resume AudioContext
     if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
         console.log("AudioContext initialized.");
     } else if (audioContext.state === "suspended") {
-        audioContext.resume().then(() => {
+        try {
+            await audioContext.resume();
             console.log("AudioContext resumed.");
-        });
+        } catch (error) {
+            console.error("Error resuming AudioContext:", error);
+            return; // Important: Stop if resume fails
+        }
     }
 
     if (!webamp) {
-        // Initialize and render Webamp
         webamp = new Webamp({
             initialTracks: [
                 { metaData: { artist: "Pretty Lights", title: "ROADtothestars11_91.mp3" }, url: "media/ROADtothestars11_91.mp3" },
@@ -29,19 +30,22 @@ function toggleWinamp() {
             ],
         });
 
-        webamp.renderWhenReady(app).then(() => {
+        try {
+            await webamp.renderWhenReady(app);
             console.log("Webamp loaded.");
-            setupAudioAnalysisFromWebamp(); // Attach analyser to Webamp's MediaPlayer
-        });
+            setupAudioAnalysisFromWebamp();
+        } catch (error) {
+            console.error("Error rendering Webamp:", error);
+            return; // Exit if rendering fails
+        }
+
         isWebampVisible = true;
     } else {
-        // Toggle Webamp visibility
         isWebampVisible ? webamp.close() : webamp.reopen();
         isWebampVisible = !isWebampVisible;
     }
 }
 
-// Setup Audio Analysis from Webamp
 function setupAudioAnalysisFromWebamp() {
     try {
         if (!audioContext) {
@@ -50,7 +54,7 @@ function setupAudioAnalysisFromWebamp() {
 
         const audioElement = webamp.getMediaElement();
         if (!audioElement) {
-            console.error("Webamp MediaElement not found.");
+            console.error("Webamp MediaElement not found. Webamp may not be fully initialized or no track is playing.");
             return;
         }
 
@@ -59,9 +63,8 @@ function setupAudioAnalysisFromWebamp() {
         analyser.fftSize = 256;
         dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-        // Connect Webamp audio to the analyser
         audioSource.connect(analyser);
-        analyser.connect(audioContext.destination);
+        analyser.connect(audioContext.destination); // Crucial for audio to play!
 
         console.log("Audio analysis setup complete using Webamp MediaElement.");
     } catch (error) {
@@ -69,7 +72,6 @@ function setupAudioAnalysisFromWebamp() {
     }
 }
 
-// Retrieve Frequency Data with Smoothing
 function getFrequencyBands() {
     if (!analyser) return { smoothedFrequency: 0, bass: 0, midrange: 0, treble: 0 };
 
@@ -87,7 +89,6 @@ function getFrequencyBands() {
     return { smoothedFrequency, bass, midrange, treble };
 }
 
-// Update Shader Uniforms
 function updateShaderUniforms(gl, program) {
     if (!analyser) return;
 

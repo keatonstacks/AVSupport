@@ -596,9 +596,8 @@ function render() {
     loc = gl.getUniformLocation(progA, "iChannel1");
     gl.uniform1i(loc, 1);
 
-    // Update shader uniforms with frequency data
-    if (analyser) {
-        updateShaderUniforms(gl, progA);
+    if (analyser && dataArray) { // Check if analyser AND dataArray are initialized
+        updateShaderUniforms(gl, program);
     }
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -624,8 +623,8 @@ function render() {
     gl.uniform1i(loc, 0);
 
     // Update shader uniforms with frequency data
-    if (analyser) {
-        updateShaderUniforms(gl, progB);
+    if (analyser && dataArray) { // Check if analyser AND dataArray are initialized
+        updateShaderUniforms(gl, program);
     }
 
     gl.clearColor(0, 0, 0, 1);
