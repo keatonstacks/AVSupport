@@ -48,13 +48,7 @@ function setupAudioAnalysisFromWebamp() {
             audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
 
-        const mediaPlayer = webamp.getMediaPlayer();
-        if (!mediaPlayer) {
-            console.error("Webamp MediaPlayer not found.");
-            return;
-        }
-
-        const audioElement = mediaPlayer.getMediaElement();
+        const audioElement = webamp.getMediaElement();
         if (!audioElement) {
             console.error("Webamp MediaElement not found.");
             return;
@@ -69,7 +63,7 @@ function setupAudioAnalysisFromWebamp() {
         audioSource.connect(analyser);
         analyser.connect(audioContext.destination);
 
-        console.log("Audio analysis setup complete using Webamp MediaPlayer.");
+        console.log("Audio analysis setup complete using Webamp MediaElement.");
     } catch (error) {
         console.error("Error during Webamp audio analysis setup:", error);
     }
