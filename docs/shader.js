@@ -606,3 +606,4 @@ function render() {
     requestAnimationFrame(render);
 }
 }
+render();
