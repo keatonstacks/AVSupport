@@ -446,8 +446,8 @@ const progB = createProgram(vs, fsB);    // Buffer B
 const progFinal = createProgram(vs, fsFinal); // Final
 
 if (!progA || !progB || !progFinal) {
-    console.error('Failed to create all programs.');
-    return;
+    console.error("Failed to create all programs. Shutting down the renderer.");
+    throw new Error("Shader program creation failed.");
 }
 
 // ---------- 8) Full-Screen Quad Setup ----------
