@@ -594,12 +594,6 @@ const ioTex = loadTexture('images/iotexture.jpg');
 const nebulaTex = loadTexture('images/nebulatexture.jpg');
 const starsTex = loadTexture('images/stars.png');
 
-// Example audio placeholders at the top:
-let smoothedFrequency = 0.0;
-let bass = 0.0;
-let midrange = 0.0;
-let treble = 0.0;
-
 // ---------- 12) Rendering variables ----------
 let iFrame = 0;
 const startTime = performance.now();
