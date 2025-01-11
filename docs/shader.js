@@ -140,19 +140,25 @@
     // ----------- END COMMON CODE -----------
     `;
 
-    // ---------- 3) Buffer A Fragment Shader (Swirling Jupiter) ----------
-    const BUFFER_A_FS = `
+// ---------- 3) Buffer A Fragment Shader (Swirling Jupiter) ----------
+const BUFFER_A_FS = `
     // "Buffer A" code from your snippet
     // We read:
     //   iChannel0 = noise
     //   iChannel1 = previous Buffer A texture
     // We output the swirling Jupiter (plus seed in alpha).
+
     uniform sampler2D iChannel0; 
     uniform sampler2D iChannel1; 
     uniform vec3 iResolution;
     uniform float iTime;
     uniform int iFrame;
-    uniform float uFrequency; // Declare uFrequency uniform
+
+    // Existing uniform for color changes:
+    uniform float uFrequency; 
+    // New uniform to intensify swirling motion:
+    uniform float uSwirlFactor;
+
     out vec4 fragColor;
 
     void mainImage( out vec4 fragColor, in vec2 fragCoord )
@@ -166,14 +172,16 @@
         float shorterSide = min(iResolution.x, iResolution.y);
         vec2 uv = fract(fragCoord / shorterSide - vec2(0.5, 0.5));
 
-        float sourceNoise = texture(iChannel0, uv + vec2(-0.03, 0.0)*iTime).x;
+        float sourceNoise = texture(iChannel0, uv + vec2(-0.03, 0.0) * iTime).x;
         float sourceMask = clamp(((sourceNoise - 0.5) * 10.0) + 0.5, 0.0, 1.0);
 
+        // "Dots" swirl detail
         vec2 dotsUV = QuakeLavaUV(uv, 0.01, 4.0, 37.699, iTime);    
         float dotsA = pow(texture(iChannel0, dotsUV * 3.0 + iTime * vec2(-0.1,-0.1)).x, 5.5);
         float dotsB = pow(texture(iChannel0, -dotsUV * 5.0 + iTime * vec2(0.1,0.1)).x, 5.5);
         float dots = max(dotsA, dotsB);
 
+        // Two layers of "turbulence" for swirling
         vec2 turbulenceUVA = QuakeLavaUV(uv, 0.005, 2.0, 37.699, iTime);    
         float turbulenceNoiseA = simplexNoise(turbulenceUVA * 6.0 + vec2(iTime * 1.0, 0.0));
         vec2 turbulenceA = vec2(dFdy(turbulenceNoiseA), -dFdx(turbulenceNoiseA));
@@ -182,22 +190,31 @@
         float turbulenceNoiseB = texture(iChannel0, turbulenceUVB + iTime * vec2(-0.05,0.0)).x;
         vec2 turbulenceB = vec2(dFdy(turbulenceNoiseB), -dFdx(turbulenceNoiseB));
 
+        // Sample jupiter color from two tiny textures A/B
         vec3 jupiterA = sampleJupiterASmoothstepFilter(uv * 1.0);
         vec3 jupiterB = sampleJupiterBSmoothstepFilter(uv * 1.0);
-        vec2 combinedVelocity = turbulenceA * 0.015 + turbulenceB * 0.004
-                                + vec2(sin(uv.y * 40.0)+1.5, 0.0) * 0.0006;
 
+        // Combine turbulence velocities, scaled by uSwirlFactor
+        vec2 combinedVelocity = 
+              turbulenceA * (0.015 + 0.015 * uSwirlFactor)
+            + turbulenceB * (0.004 + 0.004 * uSwirlFactor)
+            + vec2(sin(uv.y * 40.0) + 1.5, 0.0) * 0.0006;
+
+        // Blend the two jupiter textures
         vec3 sourceColor = mix(jupiterA, jupiterB, sourceMask);
         
-        // Use uFrequency to influence the fractals
+        // (Existing code) Use uFrequency to shift color or fractals
         sourceColor *= (1.0 + uFrequency * 0.1);
 
+        // Initialize or swirl from last frame
         if(firstFrame || resolutionChange)
         {
+            // First frame or new resolution → just set color + new seed
             fragColor = vec4(sourceColor, newTextureSeed);
         }
         else
         {
+            // Use previous frame + swirl
             float minDimension = min(iResolution.x, iResolution.y);
             float maxDimension = max(iResolution.x, iResolution.y);
             float maxAspectRatio = maxDimension / minDimension;
@@ -205,8 +222,11 @@
                 ? vec2(maxAspectRatio, 1.0)
                 : vec2(1.0, maxAspectRatio);
 
+            // Get uv from last pass
             vec2 previousUV = fract(fragCoord / iResolution.xy * aspectFactor) / aspectFactor;
             vec3 previousFrame = texture(iChannel1, previousUV + combinedVelocity).xyz;
+
+            // Blend new swirl color with last pass based on "dots"
             vec3 previousMixedWithSource = mix(previousFrame, sourceColor, dots * 0.04);
 
             fragColor = vec4(previousMixedWithSource, newTextureSeed);
@@ -216,7 +236,7 @@
     void main() {
         mainImage(fragColor, gl_FragCoord.xy);
     }
-    `;
+`;
 
     // ---------- 4) Buffer B Fragment Shader (Sharpen) ----------
     const BUFFER_B_FS = `
