@@ -4,7 +4,7 @@
     window.gl = gl; // Expose globally
     if (!gl) {
         console.error('WebGL 2.0 is not supported by your browser or device.');
-        return;
+        throw new Error('WebGL 2.0 is not supported.'); // Exit the script properly
     }
     // Fullscreen
     canvas.width = window.innerWidth;
