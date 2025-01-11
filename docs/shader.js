@@ -594,6 +594,12 @@ const ioTex = loadTexture('images/iotexture.jpg');
 const nebulaTex = loadTexture('images/nebulatexture.jpg');
 const starsTex = loadTexture('images/stars.png');
 
+// Example audio placeholders at the top:
+let smoothedFrequency = 0.0;
+let bass = 0.0;
+let midrange = 0.0;
+let treble = 0.0;
+
 // ---------- 12) Rendering variables ----------
 let iFrame = 0;
 const startTime = performance.now();
@@ -602,41 +608,59 @@ function render() {
     const timeNow = performance.now();
     const iTime = (timeNow - startTime) * 0.001;
 
-    // Pass A
+    // === Pass A ===
+    gl.useProgram(progA);                                  // <-- Ensure program A is active
     updatePassUniforms(gl, progA, [BUFFER_WIDTH, BUFFER_HEIGHT, 1.0], iTime, [
-        { texture: noiseTex, uniformName: "iChannel0" },
-        { texture: currentA === 0 ? fboA1.tex : fboA0.tex, uniformName: "iChannel1" }
+        { texture: noiseTex,                                uniformName: "iChannel0" },
+        { texture: currentA === 0 ? fboA1.tex : fboA0.tex,  uniformName: "iChannel1" }
     ]);
     updateShaderUniforms(gl, progA, { smoothedFrequency, bass, midrange, treble });
+
     gl.bindFramebuffer(gl.FRAMEBUFFER, currentA === 0 ? fboA0.fbo : fboA1.fbo);
+    gl.viewport(0, 0, BUFFER_WIDTH, BUFFER_HEIGHT);
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
+    setupVertexAttrib(progA);                              // <-- Link the quadVbo to progA's "position" attribute
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-    // Pass B
+    // === Pass B ===
+    gl.useProgram(progB);                                  // <-- Now switch to program B
     updatePassUniforms(gl, progB, [BUFFER_WIDTH, BUFFER_HEIGHT, 1.0], iTime, [
-        { texture: currentA === 0 ? fboA0.tex : fboA1.tex, uniformName: "iChannel0" }
+        { texture: currentA === 0 ? fboA0.tex : fboA1.tex,  uniformName: "iChannel0" }
     ]);
     updateShaderUniforms(gl, progB, { smoothedFrequency, bass, midrange, treble });
+
     gl.bindFramebuffer(gl.FRAMEBUFFER, fboB.fbo);
+    gl.viewport(0, 0, BUFFER_WIDTH, BUFFER_HEIGHT);
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
+    setupVertexAttrib(progB);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-    // Final Pass
+    // === Final Pass ===
+    gl.useProgram(progFinal);
     updatePassUniforms(gl, progFinal, [canvas.width, canvas.height, 1.0], iTime, [
-        { texture: fboB.tex, uniformName: "iChannel0" },
-        { texture: starsTex, uniformName: "iChannel1" },
-        { texture: ioTex, uniformName: "iChannel2" },
-        { texture: nebulaTex, uniformName: "iChannel3" }
+        { texture: fboB.tex,   uniformName: "iChannel0" },
+        { texture: starsTex,   uniformName: "iChannel1" },
+        { texture: ioTex,      uniformName: "iChannel2" },
+        { texture: nebulaTex,  uniformName: "iChannel3" }
     ]);
     updateShaderUniforms(gl, progFinal, { smoothedFrequency, bass, midrange, treble });
+
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
+
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
+    setupVertexAttrib(progFinal);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-    // Update frame count and cycle buffers
+    // Flip the double-buffer for A
     currentA = 1 - currentA;
     iFrame++;
 
