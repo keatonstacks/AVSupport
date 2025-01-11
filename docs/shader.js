@@ -631,8 +631,18 @@ function isPowerOf2(value) {
 const ioTex = loadTexture('images/iotexture.jpg');
 const nebulaTex = loadTexture('images/nebulatexture.jpg');
 const starsTex = loadTexture('images/stars.png');
-const startTime = performance.now();
 
+// Timestamps and counters
+let startTime = performance.now(); // used for iTime
+let iFrame = 0;                    // counts frames
+
+// Audio-data-driven variables (if you want to manipulate swirl/color)
+let smoothedFrequency = 0;
+let bass = 0;
+let midrange = 0;
+let treble = 0;
+
+// Render Function
 function render() {
     const timeNow = performance.now();
     const iTime = (timeNow - startTime) * 0.001;
