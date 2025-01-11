@@ -8,14 +8,11 @@ function updateAudioAnalysis() {
     // Fetch frequency data
     analyser.getByteFrequencyData(dataArray);
 
-    // Example of calculating average frequency
-    const total = dataArray.reduce((sum, value) => sum + value, 0);
-    const avgFrequency = total / dataArray.length;
+    // Process frequency bands
+    const frequencyBands = getFrequencyBands(dataArray);
 
-    smoothedFrequency = smoothedFrequency * 0.9 + avgFrequency * 0.1;
-
-    // Pass frequency data to the shader or any other visualizer
-    updateShaderUniforms(gl, program);
+    // Update uniforms in the final rendering program
+    updateShaderUniforms(gl, progFinal, frequencyBands);
 
     // Continue the loop
     requestAnimationFrame(updateAudioAnalysis);
@@ -70,22 +67,20 @@ function setupAudioAnalysis(analyserNode) {
     }
 }
 
-function updateShaderUniforms(gl, program) {
-    if (!analyser) return;
-
-    const { smoothedFrequency, bass, midrange, treble } = getFrequencyBands();
+function updateShaderUniforms(gl, program, { smoothedFrequency, bass, midrange, treble }) {
+    gl.useProgram(program);
 
     let loc = gl.getUniformLocation(program, "uFrequency");
-    gl.uniform1f(loc, smoothedFrequency);
+    if (loc) gl.uniform1f(loc, smoothedFrequency);
 
     loc = gl.getUniformLocation(program, "uBass");
-    gl.uniform1f(loc, bass);
+    if (loc) gl.uniform1f(loc, bass);
 
     loc = gl.getUniformLocation(program, "uMidrange");
-    gl.uniform1f(loc, midrange);
+    if (loc) gl.uniform1f(loc, midrange);
 
     loc = gl.getUniformLocation(program, "uTreble");
-    gl.uniform1f(loc, treble);
+    if (loc) gl.uniform1f(loc, treble);
 }
 
 function getFrequencyBands() {
