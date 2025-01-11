@@ -142,158 +142,113 @@
 
 // ---------- 3) Buffer A Fragment Shader (Swirling Jupiter) ----------
 const BUFFER_A_FS = `
-    // We read:
-    //   iChannel0 = noise
-    //   iChannel1 = previous Buffer A texture
-    // We output swirling Jupiter (plus seed in alpha).
     uniform sampler2D iChannel0; 
     uniform sampler2D iChannel1; 
     uniform vec3 iResolution;
     uniform float iTime;
     uniform int iFrame;
 
-    // SEPARATE uniform for color changes:
     uniform float uColorBoost;  
-    // SEPARATE uniform to intensify swirling motion:
     uniform float uSwirlFactor;
+
+    uniform float smoothedFrequency; 
+    uniform float bass; 
+    uniform float midrange; 
+    uniform float treble;
 
     out vec4 fragColor;
 
-    void mainImage( out vec4 fragColor, in vec2 fragCoord )
-    {
-        // Check if this is the first frame or the resolution changed
+    void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+        // Check if this is the first frame or resolution change
         bool firstFrame = (iFrame == 0);
-
         float oldTextureSeed = texture(iChannel1, vec2(0.0, 0.0)).w;
-        float newTextureSeed = SeedFromResolution(iResolution);
+        float newTextureSeed = length(iResolution);
         bool resolutionChange = (oldTextureSeed != newTextureSeed);
 
-        // Convert fragCoord -> UV in [-0.5..0.5] range
+        // Convert fragCoord to UV space
         float shorterSide = min(iResolution.x, iResolution.y);
         vec2 uv = fract(fragCoord / shorterSide - vec2(0.5, 0.5));
 
-        // Simple noise-based mask
-        float sourceNoise = texture(iChannel0, uv + vec2(-0.03, 0.0) * iTime).x;
-        float sourceMask  = clamp(((sourceNoise - 0.5) * 10.0) + 0.5, 0.0, 1.0);
+        // Default fallback for music uniforms when no audio is playing
+        float bassValue = max(bass, 0.1);           // Default to 0.1
+        float midrangeValue = max(midrange, 0.1);   // Default to 0.1
+        float trebleValue = max(treble, 0.1);       // Default to 0.1
+        float smoothedFrequencyValue = max(smoothedFrequency, 0.1);
 
-        // Dot swirl detail
-        vec2 dotsUV = QuakeLavaUV(uv, 0.01, 4.0, 37.699, iTime);    
-        float dotsA = pow(texture(iChannel0, dotsUV * 3.0 + iTime * vec2(-0.1,-0.1)).x, 5.5);
-        float dotsB = pow(texture(iChannel0, -dotsUV * 5.0 + iTime * vec2(0.1,0.1)).x, 5.5);
-        float dots  = max(dotsA, dotsB);
+        // Noise and swirling effects
+        float sourceNoise = texture(iChannel0, uv + vec2(-0.03, 0.0) * iTime).x * (1.0 + bassValue * 0.2);
+        float sourceMask = clamp(((sourceNoise - 0.5) * 10.0) + 0.5, 0.0, 1.0);
 
-        // Two layers of turbulence for swirling:
-        vec2 turbulenceUVA = QuakeLavaUV(uv, 0.005, 2.0, 37.699, iTime);    
-        float turbulenceNoiseA = simplexNoise(turbulenceUVA * 6.0 + vec2(iTime, 0.0));
-        vec2 turbulenceA = vec2(dFdy(turbulenceNoiseA), -dFdx(turbulenceNoiseA));
+        vec2 turbulenceUVA = uv + vec2(0.01, 0.02) * sin(iTime + bassValue * 5.0);
+        vec2 turbulenceA = vec2(dFdy(sin(turbulenceUVA.x * 10.0)), -dFdx(sin(turbulenceUVA.y * 10.0)));
 
-        vec2 turbulenceUVB = QuakeLavaUV(uv, 0.002, 4.0, 157.079, iTime);
-        float turbulenceNoiseB = texture(iChannel0, turbulenceUVB + iTime * vec2(-0.05, 0.0)).x;
-        vec2 turbulenceB = vec2(dFdy(turbulenceNoiseB), -dFdx(turbulenceNoiseB));
+        vec2 turbulenceUVB = uv * 2.0 + vec2(0.02, 0.01) * sin(iTime + trebleValue * 3.0);
+        vec2 turbulenceB = vec2(dFdy(cos(turbulenceUVB.x * 20.0)), -dFdx(cos(turbulenceUVB.y * 20.0)));
 
-        // Jupiter color from two small color arrays:
-        vec3 jupiterA = sampleJupiterASmoothstepFilter(uv);
-        vec3 jupiterB = sampleJupiterBSmoothstepFilter(uv);
+        vec2 combinedVelocity = turbulenceA * (0.02 + uSwirlFactor) + turbulenceB * 0.01;
 
-        //--------------------------------------------------
-        // 1) Apply swirling speed from uSwirlFactor
-        //--------------------------------------------------
-        // e.g. swirl scale ~ 0.015–0.02 for base
-        // plus user-driven factor:
-        vec2 combinedVelocity =
-            turbulenceA * (0.015 + 0.010 * uSwirlFactor)
-          + turbulenceB * (0.004 + 0.003 * uSwirlFactor)
-          + vec2(sin(uv.y * 40.0) + 1.5, 0.0) * 0.0006;
+        // Adjust colors based on midrange
+        vec3 jupiterA = vec3(0.9, 0.6, 0.4) * (1.0 + uColorBoost + midrangeValue * 0.3);
+        vec3 jupiterB = vec3(0.8, 0.5, 0.3) * (1.0 + uColorBoost + midrangeValue * 0.3);
 
-        //--------------------------------------------------
-        // 2) Combine base color & mask
-        //--------------------------------------------------
         vec3 sourceColor = mix(jupiterA, jupiterB, sourceMask);
 
-        //--------------------------------------------------
-        // 3) Limit color blowout:
-        //--------------------------------------------------
-        // Instead of directly multiplying by (1 + bigValue),
-        // we clamp the color shift from 0..0.5 range:
-        //   factor = clamp(uColorBoost, 0., 0.5)
-        // so color won't go bright yellow.
-        float colorFactor = clamp(uColorBoost, 0.0, 0.5);
-        // Then shift color slightly toward highlight:
-        // e.g. base is 1 + colorFactor
-        sourceColor *= (1.0 + colorFactor);
-
-        //--------------------------------------------------
-        // 4) If first frame/res changed, no swirl from prev
-        //--------------------------------------------------
-        if (firstFrame || resolutionChange)
-        {
-            // just set color & seed in alpha
+        // Frame blending
+        if (firstFrame || resolutionChange) {
             fragColor = vec4(sourceColor, newTextureSeed);
-        }
-        else
-        {
-            // swirl from previous frame
-            float minDim = min(iResolution.x, iResolution.y);
-            float maxDim = max(iResolution.x, iResolution.y);
-            float aspect = maxDim / minDim;
-            vec2 aspectFactor = (iResolution.x > iResolution.y)
-              ? vec2(aspect, 1.0)
-              : vec2(1.0, aspect);
-
-            // sample from last pass using swirl offset
-            vec2 previousUV = fract(fragCoord / iResolution.xy * aspectFactor) / aspectFactor;
-            vec3 previousFrame = texture(iChannel1, previousUV + combinedVelocity).xyz;
-
-            // blend new swirl color with last pass, driven by 'dots'
-            vec3 swirlMixed = mix(previousFrame, sourceColor, dots * 0.04);
-
-            fragColor = vec4(swirlMixed, newTextureSeed);
+        } else {
+            vec3 previousFrame = texture(iChannel1, uv + combinedVelocity).xyz;
+            fragColor = vec4(mix(previousFrame, sourceColor, sourceMask), newTextureSeed);
         }
     }
 
-    void main()
-    {
+
+    void main() {
         mainImage(fragColor, gl_FragCoord.xy);
     }
 `;
+
     // ---------- 4) Buffer B Fragment Shader (Sharpen) ----------
     const BUFFER_B_FS = `
-    // "Buffer B" code (sharpen pass)
     uniform sampler2D iChannel0; 
     uniform vec3 iResolution;
+
+    uniform float smoothedFrequency;
 
     out vec4 fragColor;
 
     #define strength 5.0
     #define clampValue 0.02
 
-    void mainImage( out vec4 fragColor, in vec2 fragCoord )
-    {
+    void mainImage(out vec4 fragColor, in vec2 fragCoord) {
         vec2 uv = fragCoord / iResolution.xy;
-        float xPixelOffset = 1.0 / iResolution.x;
-        float yPixelOffset = 1.0 / iResolution.y;
 
+        // Default fallback for music uniforms
+        float smoothedFrequencyValue = max(smoothedFrequency, 0.1);
+
+        // Apply sharpen with optional noise adjustment based on frequency
         vec3 centerSample = texture(iChannel0, uv).xyz;
-        vec3 northSample  = texture(iChannel0, uv + vec2(0.0,  yPixelOffset)).xyz;
-        vec3 southSample  = texture(iChannel0, uv + vec2(0.0, -yPixelOffset)).xyz;
-        vec3 eastSample   = texture(iChannel0, uv + vec2(xPixelOffset, 0.0)).xyz;
-        vec3 westSample   = texture(iChannel0, uv + vec2(-xPixelOffset,0.0)).xyz;
+        vec3 northSample  = texture(iChannel0, uv + vec2(0.0,  1.0 / iResolution.y)).xyz;
+        vec3 southSample  = texture(iChannel0, uv + vec2(0.0, -1.0 / iResolution.y)).xyz;
+        vec3 eastSample   = texture(iChannel0, uv + vec2(1.0 / iResolution.x, 0.0)).xyz;
+        vec3 westSample   = texture(iChannel0, uv + vec2(-1.0 / iResolution.x, 0.0)).xyz;
 
-        vec3 sharpen = (4.0*centerSample - northSample - southSample - eastSample - westSample) * strength;
+        vec3 sharpen = (4.0 * centerSample - northSample - southSample - eastSample - westSample) * strength;
+        sharpen += vec3(smoothedFrequencyValue * 0.01); // Adjust based on smoothed frequency
         sharpen = clamp(sharpen, -clampValue, clampValue);
-        vec3 sharpenedInput = clamp(centerSample + sharpen, 0.0, 1.0);
 
-        fragColor = vec4(sharpenedInput, 1.0);
+        fragColor = vec4(centerSample + sharpen, 1.0);
     }
+
 
     void main() {
         mainImage(fragColor, gl_FragCoord.xy);
     }
-    `;
+`;
 
-    // ---------- 5) Final Image Fragment Shader ----------
-    const IMAGE_FS = `
-    // Final pass that draws Jupiter, Io, stars, and nebula
+// ---------- Final Image Fragment Shader ----------
+const IMAGE_FS = `
+// Final pass that draws Jupiter, Io, stars, and nebula
 uniform sampler2D iChannel0; // Sharpened Jupiter (Buffer B)
 uniform sampler2D iChannel1; // Unsharpened swirl (Buffer A)
 uniform sampler2D iChannel2; // Io texture
@@ -302,9 +257,14 @@ uniform sampler2D iChannel3; // Nebula (or star) texture
 uniform vec3 iResolution;
 uniform float iTime;
 
+// Audio uniforms (fallback included for safety)
+uniform float bass;
+uniform float midrange;
+uniform float treble;
+uniform float smoothedFrequency;
+
 out vec4 fragColor;
 
-// from your "image" snippet:
 #define BackgroundColor vec3(0.0941, 0.1019, 0.0901)
 
 vec4 generateSphereSurfaceWithMask(vec2 uv, float radius) {
@@ -366,78 +326,68 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     vec2 uv = (fragCoord / shorterSide - offset);
     vec3 lightDirection = normalize(vec3(1.0, 1.0, 0.8));
 
+    // Fallback audio values to ensure stability
+    float bassValue = max(bass, 0.1);
+    float midrangeValue = max(midrange, 0.1);
+    float trebleValue = max(treble, 0.1);
+    float smoothedFrequencyValue = max(smoothedFrequency, 0.1);
+
     // Jupiter Surface and Lighting
-vec4 jupiterSurfaceWithMask = generateSphereSurfaceWithMask(uv + vec2(0.2, 0.15), 0.6);
-float jupiterLight = pow(max(dot(lightDirection, jupiterSurfaceWithMask.xyz), 0.0), 0.8);
-vec4 jupiterAtmosphere = atmosphere(jupiterSurfaceWithMask, lightDirection, vec3(1.0, 0.7, 0.4) * 3.0, 0.2, 0.05, 0.6, 2.0);
-float jupiterMask = clamp(jupiterSurfaceWithMask.w, 0.0, 1.0);
-mat3 jupiterRotationMatrix = createRotationMatrix(-0.2, 0.3);
-vec3 rotatedJupiter = jupiterRotationMatrix * (jupiterSurfaceWithMask.xyz * jupiterMask);
-vec2 jupiterUV = generateSphericalUV(rotatedJupiter, iTime * 0.02);
+    vec4 jupiterSurfaceWithMask = generateSphereSurfaceWithMask(uv + vec2(0.2, 0.15), 0.6);
+    float jupiterLight = pow(max(dot(lightDirection, jupiterSurfaceWithMask.xyz), 0.0), 0.8);
+    vec4 jupiterAtmosphere = atmosphere(
+        jupiterSurfaceWithMask, 
+        lightDirection, 
+        vec3(1.0, 0.8, 0.6) * (2.0 + bassValue * 0.2), // Audio-driven brightness
+        0.3,
+        0.1,
+        0.8,
+        3.0
+    );
+    float jupiterMask = clamp(jupiterSurfaceWithMask.w, 0.0, 1.0);
+    mat3 jupiterRotationMatrix = createRotationMatrix(-0.2, 0.3);
+    vec3 rotatedJupiter = jupiterRotationMatrix * (jupiterSurfaceWithMask.xyz * jupiterMask);
+    vec2 jupiterUV = generateSphericalUV(rotatedJupiter, iTime * 0.02 + smoothedFrequencyValue * 0.05);
 
-// Scale and Wrap UVs
-vec2 scaledUV = jupiterUV * 2.2 + vec2(0.0, 0.8);
-scaledUV = fract(scaledUV); // Ensure proper wrapping
+    // Scale and Wrap UVs
+    vec2 scaledUV = fract(jupiterUV * 2.2 + vec2(0.0, 0.8));
+    vec3 jupiterTexture = texture(iChannel0, scaledUV).xyz;
 
-// Texture Sampling
-vec3 colorA = texture(iChannel0, scaledUV).xyz;
-vec3 colorB = texture(iChannel0, fract(scaledUV + vec2(1.0, 0.0))).xyz;
-vec3 colorC = texture(iChannel0, fract(scaledUV + vec2(0.0, 1.0))).xyz;
-vec3 colorD = texture(iChannel0, fract(scaledUV + vec2(1.0, 1.0))).xyz;
+    // Enhance Jupiter Texture with treble
+    jupiterTexture *= vec3(
+        pow(jupiterTexture.r, 3.0 + trebleValue * 0.5),
+        pow(jupiterTexture.g, 6.0 + trebleValue * 0.5),
+        pow(jupiterTexture.b, 8.0 + trebleValue * 0.5)
+    ) * 3.0;
 
-// Seamless Blending using smoothstep
-float edgeBlendX = smoothstep(0.45, 0.55, abs(fract(scaledUV.x) - 0.5));
-float edgeBlendY = smoothstep(0.45, 0.55, abs(fract(scaledUV.y) - 0.5));
-
-// Combine Edges for smooth blending
-vec3 blendedTexture = mix(
-    mix(colorA, colorB, edgeBlendX),
-    mix(colorC, colorD, edgeBlendY),
-    edgeBlendX * edgeBlendY
-);
-
-// Apply additional color adjustment to enhance the planet surface
-vec3 jupiterTexture = pow(blendedTexture, vec3(2.2)) * vec3(1.2, 1.0, 0.9); // Subtle reddish tint
-jupiterTexture = vec3(pow(jupiterTexture.x, 3.5), pow(jupiterTexture.y, 6.0), pow(jupiterTexture.z, 8.0)) * 3.5;
-
-    
-    // Io
+    // Io Moon
     vec4 ioSurfaceWithMask = generateSphereSurfaceWithMask(uv + vec2(-0.32, -0.2), 0.07);
     float ioLight = pow(max(dot(lightDirection, ioSurfaceWithMask.xyz), 0.0), 0.4);
     vec4 ioAtmosphere = atmosphere(ioSurfaceWithMask, lightDirection, vec3(1.0, 0.9, 0.8) * 1.5, 0.06, 0.03, 1.0, 4.0);
-    float ioMask = clamp(ioSurfaceWithMask.w, 0.0, 1.0);
-    mat3 ioRotationMatrix = createRotationMatrix(0.4, -0.1);
-    vec3 rotatedIo = ioRotationMatrix * (ioSurfaceWithMask.xyz * ioMask);
-    vec2 ioUV = generateSphericalUV(rotatedIo, -iTime * 0.05);
-    vec3 ioTexture = texture(iChannel2, fract((ioUV + vec2(0.0, 0.8)) * aspectRatio) / aspectRatio).xyz;
-    ioTexture = vec3(min(pow(1.0 - ioTexture.x, 5.5) * 2.0, 1.0));
+    vec3 ioTexture = texture(iChannel2, fract((generateSphericalUV(ioSurfaceWithMask.xyz, -iTime * 0.05)))).xyz;
 
-    // Stars
-    vec3 stars = vec3(pow(texture(iChannel1, uv).x, 25.0)) * vec3(1.0, 0.4, 0.3) * 3.0;
-    vec2 nebulaUV = uv;
-    vec3 nebulaTexture = texture(iChannel3, nebulaUV).xyz;
-    float nebulaFade = pow(max(1.0 - uv.y, 0.0), 2.5) * 0.5;
-    vec3 nebulaTint = vec3(0.9, 0.3, 0.4);
-    vec3 nebula = vec3(pow(nebulaTexture.x, 2.0)) * nebulaFade * nebulaTint;
+    // Stars and Nebula
+    vec3 stars = vec3(pow(texture(iChannel1, uv).x, 30.0)) * vec3(1.2, 0.5, 0.4) * 4.0;
+    vec3 nebulaTexture = texture(iChannel3, uv).xyz;
+    vec3 nebula = nebulaTexture * pow(max(1.0 - uv.y, 0.0), 2.5) * vec3(0.9, 0.3, 0.4);
+
+    // Dynamic nebula effect
+    nebula *= (1.0 + smoothedFrequencyValue * 0.3);
+
     stars += nebula;
 
-    // Combining
+    // Combining Layers
     vec3 jupiterWithBackground = mix(stars, jupiterTexture * jupiterLight, jupiterMask);
-    vec3 jupiterWithAtmosphere = mix(jupiterWithBackground, jupiterAtmosphere.xyz, jupiterAtmosphere.w);
-    vec3 jupiterWithIo = mix(jupiterWithAtmosphere, ioTexture * ioLight, ioMask);
-    vec3 jupiterWithIoWithAtmosphere = mix(jupiterWithIo, ioAtmosphere.xyz, ioAtmosphere.w);
+    vec3 jupiterWithAtmosphere = mix(jupiterWithBackground, jupiterAtmosphere.rgb, jupiterAtmosphere.a);
+    vec3 ioWithAtmosphere = mix(ioTexture * ioLight, ioAtmosphere.rgb, ioAtmosphere.a);
 
-    vec2 overlayUV = fragCoord.xy / iResolution.xy;
-    vec3 overlayColor = mix(0.3, 0.9, pow(overlayUV.x, 1.7)) * vec3(1.0, 0.35, 0.1) * 1.4;
-    vec3 imageWithOverlay = mix(jupiterWithIoWithAtmosphere, overlayColor, pow(1.0 - overlayUV.y * 0.5, 5.0) * 0.7 + 0.1);
-
-    fragColor = vec4(imageWithOverlay, 1.0);
+    fragColor = vec4(jupiterWithAtmosphere + ioWithAtmosphere, 1.0);
 }
 
 void main() {
     mainImage(fragColor, gl_FragCoord.xy);
 }
-    `;
+`;
 
     // ---------- 6) Helper to compile & link WebGL programs ----------
     function createShader(gl, type, source) {
