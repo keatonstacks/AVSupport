@@ -142,102 +142,120 @@
 
 // ---------- 3) Buffer A Fragment Shader (Swirling Jupiter) ----------
 const BUFFER_A_FS = `
-    // "Buffer A" code from your snippet
     // We read:
     //   iChannel0 = noise
     //   iChannel1 = previous Buffer A texture
-    // We output the swirling Jupiter (plus seed in alpha).
-
+    // We output swirling Jupiter (plus seed in alpha).
     uniform sampler2D iChannel0; 
     uniform sampler2D iChannel1; 
     uniform vec3 iResolution;
     uniform float iTime;
     uniform int iFrame;
 
-    // Existing uniform for color changes:
-    uniform float uFrequency; 
-    // New uniform to intensify swirling motion:
+    // SEPARATE uniform for color changes:
+    uniform float uColorBoost;  
+    // SEPARATE uniform to intensify swirling motion:
     uniform float uSwirlFactor;
 
     out vec4 fragColor;
 
     void mainImage( out vec4 fragColor, in vec2 fragCoord )
     {
+        // Check if this is the first frame or the resolution changed
         bool firstFrame = (iFrame == 0);
 
         float oldTextureSeed = texture(iChannel1, vec2(0.0, 0.0)).w;
         float newTextureSeed = SeedFromResolution(iResolution);
         bool resolutionChange = (oldTextureSeed != newTextureSeed);
 
+        // Convert fragCoord -> UV in [-0.5..0.5] range
         float shorterSide = min(iResolution.x, iResolution.y);
         vec2 uv = fract(fragCoord / shorterSide - vec2(0.5, 0.5));
 
+        // Simple noise-based mask
         float sourceNoise = texture(iChannel0, uv + vec2(-0.03, 0.0) * iTime).x;
-        float sourceMask = clamp(((sourceNoise - 0.5) * 10.0) + 0.5, 0.0, 1.0);
+        float sourceMask  = clamp(((sourceNoise - 0.5) * 10.0) + 0.5, 0.0, 1.0);
 
-        // "Dots" swirl detail
+        // Dot swirl detail
         vec2 dotsUV = QuakeLavaUV(uv, 0.01, 4.0, 37.699, iTime);    
         float dotsA = pow(texture(iChannel0, dotsUV * 3.0 + iTime * vec2(-0.1,-0.1)).x, 5.5);
         float dotsB = pow(texture(iChannel0, -dotsUV * 5.0 + iTime * vec2(0.1,0.1)).x, 5.5);
-        float dots = max(dotsA, dotsB);
+        float dots  = max(dotsA, dotsB);
 
-        // Two layers of "turbulence" for swirling
+        // Two layers of turbulence for swirling:
         vec2 turbulenceUVA = QuakeLavaUV(uv, 0.005, 2.0, 37.699, iTime);    
-        float turbulenceNoiseA = simplexNoise(turbulenceUVA * 6.0 + vec2(iTime * 1.0, 0.0));
+        float turbulenceNoiseA = simplexNoise(turbulenceUVA * 6.0 + vec2(iTime, 0.0));
         vec2 turbulenceA = vec2(dFdy(turbulenceNoiseA), -dFdx(turbulenceNoiseA));
 
-        vec2 turbulenceUVB = QuakeLavaUV(uv, 0.002, 4.0, 157.079, iTime);    
-        float turbulenceNoiseB = texture(iChannel0, turbulenceUVB + iTime * vec2(-0.05,0.0)).x;
+        vec2 turbulenceUVB = QuakeLavaUV(uv, 0.002, 4.0, 157.079, iTime);
+        float turbulenceNoiseB = texture(iChannel0, turbulenceUVB + iTime * vec2(-0.05, 0.0)).x;
         vec2 turbulenceB = vec2(dFdy(turbulenceNoiseB), -dFdx(turbulenceNoiseB));
 
-        // Sample jupiter color from two tiny textures A/B
-        vec3 jupiterA = sampleJupiterASmoothstepFilter(uv * 1.0);
-        vec3 jupiterB = sampleJupiterBSmoothstepFilter(uv * 1.0);
+        // Jupiter color from two small color arrays:
+        vec3 jupiterA = sampleJupiterASmoothstepFilter(uv);
+        vec3 jupiterB = sampleJupiterBSmoothstepFilter(uv);
 
-        // Combine turbulence velocities, scaled by uSwirlFactor
-        vec2 combinedVelocity = 
-              turbulenceA * (0.015 + 0.015 * uSwirlFactor)
-            + turbulenceB * (0.004 + 0.004 * uSwirlFactor)
-            + vec2(sin(uv.y * 40.0) + 1.5, 0.0) * 0.0006;
+        //--------------------------------------------------
+        // 1) Apply swirling speed from uSwirlFactor
+        //--------------------------------------------------
+        // e.g. swirl scale ~ 0.015–0.02 for base
+        // plus user-driven factor:
+        vec2 combinedVelocity =
+            turbulenceA * (0.015 + 0.010 * uSwirlFactor)
+          + turbulenceB * (0.004 + 0.003 * uSwirlFactor)
+          + vec2(sin(uv.y * 40.0) + 1.5, 0.0) * 0.0006;
 
-        // Blend the two jupiter textures
+        //--------------------------------------------------
+        // 2) Combine base color & mask
+        //--------------------------------------------------
         vec3 sourceColor = mix(jupiterA, jupiterB, sourceMask);
-        
-        // (Existing code) Use uFrequency to shift color or fractals
-        sourceColor *= (1.0 + uFrequency * 0.1);
 
-        // Initialize or swirl from last frame
-        if(firstFrame || resolutionChange)
+        //--------------------------------------------------
+        // 3) Limit color blowout:
+        //--------------------------------------------------
+        // Instead of directly multiplying by (1 + bigValue),
+        // we clamp the color shift from 0..0.5 range:
+        //   factor = clamp(uColorBoost, 0., 0.5)
+        // so color won't go bright yellow.
+        float colorFactor = clamp(uColorBoost, 0.0, 0.5);
+        // Then shift color slightly toward highlight:
+        // e.g. base is 1 + colorFactor
+        sourceColor *= (1.0 + colorFactor);
+
+        //--------------------------------------------------
+        // 4) If first frame/res changed, no swirl from prev
+        //--------------------------------------------------
+        if (firstFrame || resolutionChange)
         {
-            // First frame or new resolution → just set color + new seed
+            // just set color & seed in alpha
             fragColor = vec4(sourceColor, newTextureSeed);
         }
         else
         {
-            // Use previous frame + swirl
-            float minDimension = min(iResolution.x, iResolution.y);
-            float maxDimension = max(iResolution.x, iResolution.y);
-            float maxAspectRatio = maxDimension / minDimension;
+            // swirl from previous frame
+            float minDim = min(iResolution.x, iResolution.y);
+            float maxDim = max(iResolution.x, iResolution.y);
+            float aspect = maxDim / minDim;
             vec2 aspectFactor = (iResolution.x > iResolution.y)
-                ? vec2(maxAspectRatio, 1.0)
-                : vec2(1.0, maxAspectRatio);
+              ? vec2(aspect, 1.0)
+              : vec2(1.0, aspect);
 
-            // Get uv from last pass
+            // sample from last pass using swirl offset
             vec2 previousUV = fract(fragCoord / iResolution.xy * aspectFactor) / aspectFactor;
             vec3 previousFrame = texture(iChannel1, previousUV + combinedVelocity).xyz;
 
-            // Blend new swirl color with last pass based on "dots"
-            vec3 previousMixedWithSource = mix(previousFrame, sourceColor, dots * 0.04);
+            // blend new swirl color with last pass, driven by 'dots'
+            vec3 swirlMixed = mix(previousFrame, sourceColor, dots * 0.04);
 
-            fragColor = vec4(previousMixedWithSource, newTextureSeed);
+            fragColor = vec4(swirlMixed, newTextureSeed);
         }
     }
 
-    void main() {
+    void main()
+    {
         mainImage(fragColor, gl_FragCoord.xy);
     }
 `;
-
     // ---------- 4) Buffer B Fragment Shader (Sharpen) ----------
     const BUFFER_B_FS = `
     // "Buffer B" code (sharpen pass)
@@ -614,38 +632,52 @@ const ioTex = loadTexture('images/iotexture.jpg');
 const nebulaTex = loadTexture('images/nebulatexture.jpg');
 const starsTex = loadTexture('images/stars.png');
 
-// ---------- 12) Rendering variables ----------
-let iFrame = 0;
-const startTime = performance.now();
-
 function render() {
     const timeNow = performance.now();
     const iTime = (timeNow - startTime) * 0.001;
 
-    // === Pass A ===
-    gl.useProgram(progA);                                  // <-- Ensure program A is active
-    updatePassUniforms(gl, progA, [BUFFER_WIDTH, BUFFER_HEIGHT, 1.0], iTime, [
-        { texture: noiseTex,                                uniformName: "iChannel0" },
-        { texture: currentA === 0 ? fboA1.tex : fboA0.tex,  uniformName: "iChannel1" }
-    ]);
-    updateShaderUniforms(gl, progA, { smoothedFrequency, bass, midrange, treble });
+    const swirlFactor = Math.min(smoothedFrequency * 0.02, 2.0); // up to 2.0
+    const colorFactor = Math.min(smoothedFrequency * 0.003, 0.5); // up to 0.5
 
+    // Prepare an object to pass to updateShaderUniforms:
+    const uniformData = {
+      smoothedFrequency,
+      bass,
+      midrange,
+      treble,
+      swirlFactor,
+      colorFactor
+    };
+
+    // === Pass A ===
+    gl.useProgram(progA);
+    updatePassUniforms(gl, progA, [BUFFER_WIDTH, BUFFER_HEIGHT, 1.0], iTime, [
+        { texture: noiseTex, uniformName: "iChannel0" },
+        { texture: currentA === 0 ? fboA1.tex : fboA0.tex, uniformName: "iChannel1" }
+    ]);
+    
+    // Pass the updated uniform data (includes swirlFactor & colorFactor):
+    updateShaderUniforms(gl, progA, uniformData);
+
+    // Render to Buffer A
     gl.bindFramebuffer(gl.FRAMEBUFFER, currentA === 0 ? fboA0.fbo : fboA1.fbo);
     gl.viewport(0, 0, BUFFER_WIDTH, BUFFER_HEIGHT);
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
-    setupVertexAttrib(progA);                              // <-- Link the quadVbo to progA's "position" attribute
+    setupVertexAttrib(progA);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
     // === Pass B ===
-    gl.useProgram(progB);                                  // <-- Now switch to program B
+    gl.useProgram(progB);
     updatePassUniforms(gl, progB, [BUFFER_WIDTH, BUFFER_HEIGHT, 1.0], iTime, [
-        { texture: currentA === 0 ? fboA0.tex : fboA1.tex,  uniformName: "iChannel0" }
+        { texture: currentA === 0 ? fboA0.tex : fboA1.tex, uniformName: "iChannel0" }
     ]);
-    updateShaderUniforms(gl, progB, { smoothedFrequency, bass, midrange, treble });
+    
+    updateShaderUniforms(gl, progB, uniformData);
 
+    // Render to Buffer B
     gl.bindFramebuffer(gl.FRAMEBUFFER, fboB.fbo);
     gl.viewport(0, 0, BUFFER_WIDTH, BUFFER_HEIGHT);
     gl.clearColor(0, 0, 0, 1);
@@ -658,13 +690,15 @@ function render() {
     // === Final Pass ===
     gl.useProgram(progFinal);
     updatePassUniforms(gl, progFinal, [canvas.width, canvas.height, 1.0], iTime, [
-        { texture: fboB.tex,   uniformName: "iChannel0" },
-        { texture: starsTex,   uniformName: "iChannel1" },
-        { texture: ioTex,      uniformName: "iChannel2" },
-        { texture: nebulaTex,  uniformName: "iChannel3" }
+        { texture: fboB.tex,  uniformName: "iChannel0" },
+        { texture: starsTex,  uniformName: "iChannel1" },
+        { texture: ioTex,     uniformName: "iChannel2" },
+        { texture: nebulaTex, uniformName: "iChannel3" }
     ]);
-    updateShaderUniforms(gl, progFinal, { smoothedFrequency, bass, midrange, treble });
+    
+    updateShaderUniforms(gl, progFinal, uniformData);
 
+    // Render Final to screen
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0, 0, 0, 1);
