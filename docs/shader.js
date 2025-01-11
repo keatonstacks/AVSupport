@@ -434,6 +434,43 @@ void main() {
         gl.deleteShader(fs);
         return prog;
     }
+// =============================
+//  Update Pass Uniforms Helper
+// =============================
+function updatePassUniforms(gl, program, resolution, time, textureBindings) {
+    // 1) Use the correct shader program
+    gl.useProgram(program);
+
+    // 2) Set iResolution
+    let loc = gl.getUniformLocation(program, "iResolution");
+    if (loc) {
+        gl.uniform3f(loc, resolution[0], resolution[1], resolution[2]);
+    }
+
+    // 3) Set iTime
+    loc = gl.getUniformLocation(program, "iTime");
+    if (loc) {
+        gl.uniform1f(loc, time);
+    }
+
+    // 4) Bind & set each texture
+    // e.g. textureBindings = [
+    //   { texture: noiseTex, uniformName: "iChannel0" },
+    //   { texture: fboA0.tex, uniformName: "iChannel1" },
+    //   ...
+    // ]
+    textureBindings.forEach((tb, index) => {
+        // Activate texture unit
+        gl.activeTexture(gl.TEXTURE0 + index);
+        gl.bindTexture(gl.TEXTURE_2D, tb.texture);
+
+        // Set uniform sampler2D
+        loc = gl.getUniformLocation(program, tb.uniformName);
+        if (loc) {
+            gl.uniform1i(loc, index);
+        }
+    });
+}
 
     // ---------- 7) Create Pass Programs (A, B, Final) ----------
 const vs = QUAD_VS;
