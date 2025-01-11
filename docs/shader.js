@@ -2,6 +2,7 @@
     // ---------- 1) Basic Setup ----------
     const canvas = document.getElementById('shaderCanvas');
     const gl = canvas.getContext('webgl2', { alpha: false });
+    window.gl = gl; // Expose globally
     if (!gl) {
         console.error('WebGL 2.0 is not supported by your browser or device.');
         return;
@@ -561,159 +562,48 @@ const starsTex = loadTexture('images/stars.png');
 let iFrame = 0;
 const startTime = performance.now();
 
-// ---------- 13) The Render Loop ----------
 function render() {
     const timeNow = performance.now();
     const iTime = (timeNow - startTime) * 0.001;
 
-    // === Pass A: produce swirling Jupiter ===
-    const prevA = currentA;
-    const nextA = 1 - currentA;
-    const prevFboA = (prevA === 0) ? fboA0 : fboA1;
-    const nextFboA = (nextA === 0) ? fboA0 : fboA1;
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, nextFboA.fbo);
-    gl.viewport(0, 0, BUFFER_WIDTH, BUFFER_HEIGHT);
-    gl.useProgram(progA);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
-    setupVertexAttrib(progA);
-
-    let loc = gl.getUniformLocation(progA, "iTime");
-    gl.uniform1f(loc, iTime);
-    loc = gl.getUniformLocation(progA, "iResolution");
-    gl.uniform3f(loc, BUFFER_WIDTH, BUFFER_HEIGHT, 1.0);
-    loc = gl.getUniformLocation(progA, "iFrame");
-    gl.uniform1i(loc, iFrame);
-
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, noiseTex);
-    loc = gl.getUniformLocation(progA, "iChannel0");
-    gl.uniform1i(loc, 0);
-
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, prevFboA.tex);
-    loc = gl.getUniformLocation(progA, "iChannel1");
-    gl.uniform1i(loc, 1);
-
-    if (analyser && dataArray) { // Check if analyser AND dataArray are initialized
-        updateShaderUniforms(gl, program);
-    }
-
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-    // === Pass B: sharpen that swirl ===
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fboB.fbo);
-    gl.viewport(0, 0, BUFFER_WIDTH, BUFFER_HEIGHT);
-    gl.useProgram(progB);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
-    setupVertexAttrib(progB);
-
-    loc = gl.getUniformLocation(progB, "iResolution");
-    gl.uniform3f(loc, BUFFER_WIDTH, BUFFER_HEIGHT, 1.0);
-
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, nextFboA.tex);
-    loc = gl.getUniformLocation(progB, "iChannel0");
-    gl.uniform1i(loc, 0);
-
-// Update shader uniforms with frequency data
-if (analyser && dataArray) {
-    // Process frequency data
-    analyser.getByteFrequencyData(dataArray);
-
-    // Calculate frequency metrics
-    const total = dataArray.reduce((sum, value) => sum + value, 0);
-    const avgFrequency = total / dataArray.length;
-    smoothedFrequency = smoothedFrequency * 0.9 + avgFrequency * 0.1;
-
-    const bass = dataArray.slice(0, 20).reduce((sum, value) => sum + value, 0) / 20;
-    const midrange = dataArray.slice(20, 100).reduce((sum, value) => sum + value, 0) / 80;
-    const treble = dataArray.slice(100).reduce((sum, value) => sum + value, 0) / (dataArray.length - 100);
-
-    // Debugging (optional): Log frequency bands
-    console.log("Frequency Bands:", { smoothedFrequency, bass, midrange, treble });
-
-    // Update shader uniforms with the calculated values
-    updateShaderUniforms(gl, program, { smoothedFrequency, bass, midrange, treble });
-}
-
-
+    // Pass A
+    updatePassUniforms(gl, progA, [BUFFER_WIDTH, BUFFER_HEIGHT, 1.0], iTime, [
+        { texture: noiseTex, uniformName: "iChannel0" },
+        { texture: currentA === 0 ? fboA1.tex : fboA0.tex, uniformName: "iChannel1" }
+    ]);
+    updateShaderUniforms(gl, progA, { smoothedFrequency, bass, midrange, treble });
+    gl.bindFramebuffer(gl.FRAMEBUFFER, currentA === 0 ? fboA0.fbo : fboA1.fbo);
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-    // === Final Pass: draw to screen ===
-    gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.useProgram(progFinal);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
-    setupVertexAttrib(progFinal);
-
-    loc = gl.getUniformLocation(progFinal, "iResolution");
-    gl.uniform3f(loc, canvas.width, canvas.height, 1.0);
-    loc = gl.getUniformLocation(progFinal, "iTime");
-    gl.uniform1f(loc, iTime);
-
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, fboB.tex);
-    loc = gl.getUniformLocation(progFinal, "iChannel0");
-    gl.uniform1i(loc, 0);
-
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, starsTex);
-    loc = gl.getUniformLocation(progFinal, "iChannel1");
-    gl.uniform1i(loc, 1);
-
-    gl.activeTexture(gl.TEXTURE2);
-    gl.bindTexture(gl.TEXTURE_2D, ioTex);
-    loc = gl.getUniformLocation(progFinal, "iChannel2");
-    gl.uniform1i(loc, 2);
-
-    gl.activeTexture(gl.TEXTURE3);
-    gl.bindTexture(gl.TEXTURE_2D, nebulaTex);
-    loc = gl.getUniformLocation(progFinal, "iChannel3");
-    gl.uniform1i(loc, 3);
-
-    // Update shader uniforms with frequency data
-// Update shader uniforms with frequency data
-if (analyser && dataArray) {
-    // Process frequency data
-    analyser.getByteFrequencyData(dataArray);
-
-    // Calculate frequency metrics
-    const total = dataArray.reduce((sum, value) => sum + value, 0);
-    const avgFrequency = total / dataArray.length;
-    smoothedFrequency = smoothedFrequency * 0.9 + avgFrequency * 0.1;
-
-    const bass = dataArray.slice(0, 20).reduce((sum, value) => sum + value, 0) / 20;
-    const midrange = dataArray.slice(20, 100).reduce((sum, value) => sum + value, 0) / 80;
-    const treble = dataArray.slice(100).reduce((sum, value) => sum + value, 0) / (dataArray.length - 100);
-
-    // Debugging (optional): Log frequency bands
-    console.log("Frequency Bands:", { smoothedFrequency, bass, midrange, treble });
-
-    // Update shader uniforms with the calculated values
-    updateShaderUniforms(gl, program, { smoothedFrequency, bass, midrange, treble });
-}
-
-
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    // Pass B
+    updatePassUniforms(gl, progB, [BUFFER_WIDTH, BUFFER_HEIGHT, 1.0], iTime, [
+        { texture: currentA === 0 ? fboA0.tex : fboA1.tex, uniformName: "iChannel0" }
+    ]);
+    updateShaderUniforms(gl, progB, { smoothedFrequency, bass, midrange, treble });
+    gl.bindFramebuffer(gl.FRAMEBUFFER, fboB.fbo);
+    gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-    currentA = nextA;
+    // Final Pass
+    updatePassUniforms(gl, progFinal, [canvas.width, canvas.height, 1.0], iTime, [
+        { texture: fboB.tex, uniformName: "iChannel0" },
+        { texture: starsTex, uniformName: "iChannel1" },
+        { texture: ioTex, uniformName: "iChannel2" },
+        { texture: nebulaTex, uniformName: "iChannel3" }
+    ]);
+    updateShaderUniforms(gl, progFinal, { smoothedFrequency, bass, midrange, treble });
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+    // Update frame count and cycle buffers
+    currentA = 1 - currentA;
     iFrame++;
+
     requestAnimationFrame(render);
 }
-
-requestAnimationFrame(render);
-
-})();
+)();
