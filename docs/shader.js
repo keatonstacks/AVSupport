@@ -631,6 +631,7 @@ function isPowerOf2(value) {
 const ioTex = loadTexture('images/iotexture.jpg');
 const nebulaTex = loadTexture('images/nebulatexture.jpg');
 const starsTex = loadTexture('images/stars.png');
+const startTime = performance.now();
 
 function render() {
     const timeNow = performance.now();
