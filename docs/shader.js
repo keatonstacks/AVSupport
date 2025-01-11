@@ -1,5 +1,4 @@
-(() => {
-    // ---------- 1) Basic Setup ----------
+// ---------- 1) Basic Setup ----------
     const canvas = document.getElementById('shaderCanvas');
     const gl = canvas.getContext('webgl2', { alpha: false });
     window.gl = gl; // Expose globally
@@ -606,4 +605,4 @@ function render() {
 
     requestAnimationFrame(render);
 }
-})();
+}
