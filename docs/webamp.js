@@ -1,3 +1,4 @@
+
 /* GLOBALS */
 let webamp = null;
 let isWebampVisible = false;
@@ -63,6 +64,11 @@ async function toggleWinamp() {
         } catch (error) {
             console.error("Error rendering Webamp:", error.message);
             return;
+        }
+
+        if (typeof render === "function" && !window._renderStarted) {
+            window._renderStarted = true;
+            render();
         }
 
         isWebampVisible = true;
