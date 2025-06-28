@@ -7,13 +7,19 @@
         throw new Error('WebGL 2.0 is not supported.'); // Exit the script properly
     }
     // Fullscreen
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+    gl.viewport(0, 0, canvas.width, canvas.height);
 
-    window.addEventListener('resize', () => {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-    });
+    window.addEventListener('resize', resizeCanvas);
+
+    function resizeCanvas() {
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = window.innerWidth * dpr;
+        canvas.height = window.innerHeight * dpr;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+    }
 
     const QUAD_VS = `#version 300 es
     precision highp float;
@@ -568,7 +574,7 @@ const quadVerts = new Float32Array([
 gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
 
 function setupVertexAttrib(program) {
-    const loc = gl.getAttribLocation(program, 'position');
+    const loc = 0; // Must match layout(location = 0)
     gl.enableVertexAttribArray(loc);
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 }
@@ -669,8 +675,14 @@ const starsTex = loadTexture('images/stars.png');
 let startTime = performance.now(); // used for iTime
 let iFrame = 0;                    // counts frames
 
-// Render Function
-function render() {
+let lastFrameTime = 0;
+    // Render Function
+    function render(now) {
+        if (now - lastFrameTime < 1000 / 60) {
+            requestAnimationFrame(render);
+            return;
+        }
+        lastFrameTime = now;
     const timeNow = performance.now();
     const iTime = (timeNow - startTime) * 0.001;
 
