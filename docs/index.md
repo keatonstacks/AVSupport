@@ -1,10 +1,20 @@
+<!-- CSS First -->
 <link rel="stylesheet" href="styles.css">
-<script src="https://unpkg.com/webamp@latest/dist/webamp.bundle.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
-<script src="webamp.js"></script>
-<script src="lastCommit.js"></script>
+
+<!-- WebGL Canvas Background -->
 <canvas id="shaderCanvas"></canvas>
+
+<!-- Webamp + Audio Logic -->
+<script src="https://unpkg.com/webamp@1.5.0/built/webamp.bundle.min.js"></script>
+<script src="webamp.js"></script>
+
+<!-- Optional: commit or site versioning -->
+<script src="lastCommit.js"></script>
+
+<!-- Shader logic last -->
 <script src="shader.js"></script>
+
 
 ### Audio Visual Support Documentation
 
@@ -55,5 +65,5 @@ Having worked in the industry for 10 years, I hope to help provide organized, qu
 **Date Created**: December 29, 2024
 <span id="lastUpdated">Last Updated: Loading...</span>
 
-<button onclick="toggleWinamp()">Play Pretty Lights</button>
+<button onclick="toggleWinamp()" id="toggleButton">🎵 Open Webamp</button>
 <div id="app"></div>

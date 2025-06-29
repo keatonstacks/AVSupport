@@ -7,30 +7,68 @@
         throw new Error('WebGL 2.0 is not supported.'); // Exit the script properly
     }
     // Fullscreen
-    const dpr = window.devicePixelRatio || 1;
-    canvas.width = window.innerWidth * dpr;
-    canvas.height = window.innerHeight * dpr;
-    gl.viewport(0, 0, canvas.width, canvas.height);
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
-    window.addEventListener('resize', resizeCanvas);
-
-    function resizeCanvas() {
-        const dpr = window.devicePixelRatio || 1;
-        canvas.width = window.innerWidth * dpr;
-        canvas.height = window.innerHeight * dpr;
-        gl.viewport(0, 0, canvas.width, canvas.height);
-    }
+    window.addEventListener('resize', () => {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    });
 
     const QUAD_VS = `#version 300 es
-    precision highp float;
-    layout(location = 0) in vec2 position;
-    out vec2 vUV;
-    void main() {
-        // Map position from [-1,1] to [0,1] or pass as UV
-        vUV = (position + 1.0) * 0.5;
-        gl_Position = vec4(position, 0.0, 1.0);
-    }
-    `;
+        precision highp float;
+        layout(location = 0) in vec2 position;
+        out vec2 vUV;
+        void main() {
+            vUV = (position + 1.0) * 0.5;
+            gl_Position = vec4(position, 0.0, 1.0);
+        }`;
+
+        const QUAD_FS = `#version 300 es
+        precision highp float;
+
+        in vec2 vUV;
+
+        uniform float uTime;
+        uniform vec2 uRandomOffset;
+        uniform float uBeatPhase;
+        uniform sampler2D iChannel0;
+
+        out vec4 fragColor;
+
+        vec2 QuakeLavaUV(vec2 coords, float amplitude, float speed, float frequency, float time) {
+            float scaledTime = time * speed;
+            vec2 scaledCoords = coords * frequency;
+            float x = sin(scaledTime + scaledCoords.x) * amplitude;
+            float y = sin(scaledTime + scaledCoords.y) * amplitude;
+            return coords + vec2(y, x);
+        }
+
+        float hash(vec2 p) {
+            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
+        }
+
+        float simplexNoise(vec2 p) {
+            vec2 i = floor(p);
+            vec2 f = fract(p);
+            float a = hash(i);
+            float b = hash(i + vec2(1.0, 0.0));
+            float c = hash(i + vec2(0.0, 1.0));
+            float d = hash(i + vec2(1.0, 1.0));
+            vec2 u = f * f * (3.0 - 2.0 * f);
+            return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+        }
+
+        void main() {
+            vec2 jitteredUV = vUV + uRandomOffset * 0.05;
+            jitteredUV += vec2(
+                simplexNoise(vUV * 8.0 + uTime * 0.5),
+                simplexNoise(vUV * 8.0 + uTime * 0.5 + 77.0)
+            ) * 0.015;
+
+            vec2 finalUV = QuakeLavaUV(jitteredUV, 0.03, 1.5, 2.0, uTime + uBeatPhase);
+            fragColor = texture(iChannel0, finalUV);
+        }`;
 
     const COMMON_GLSL = `#version 300 es
     precision highp float;
@@ -574,7 +612,7 @@ const quadVerts = new Float32Array([
 gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
 
 function setupVertexAttrib(program) {
-    const loc = 0; // Must match layout(location = 0)
+    const loc = gl.getAttribLocation(program, 'position');
     gl.enableVertexAttribArray(loc);
     gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
 }
@@ -675,14 +713,8 @@ const starsTex = loadTexture('images/stars.png');
 let startTime = performance.now(); // used for iTime
 let iFrame = 0;                    // counts frames
 
-let lastFrameTime = 0;
-    // Render Function
-    function render(now) {
-        if (now - lastFrameTime < 1000 / 60) {
-            requestAnimationFrame(render);
-            return;
-        }
-        lastFrameTime = now;
+// Render Function
+function render() {
     const timeNow = performance.now();
     const iTime = (timeNow - startTime) * 0.001;
 
