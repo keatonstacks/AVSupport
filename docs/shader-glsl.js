@@ -1,7 +1,7 @@
 // shader-glsl.js
 // COMBINED SHADERS for AVSupport (Classic + Ring Modes)
 
-const QUAD_VS = `#version 300 es
+window.QUAD_VS = `#version 300 es
     precision highp float;
     layout(location = 0) in vec2 position;
     out vec2 vUV;
@@ -10,7 +10,7 @@ const QUAD_VS = `#version 300 es
         gl_Position = vec4(position, 0.0, 1.0);
     }`;
 
-const QUAD_FS = `#version 300 es
+window.QUAD_FS = `#version 300 es
     precision highp float;
 
     in vec2 vUV;
@@ -57,7 +57,7 @@ const QUAD_FS = `#version 300 es
     }`;
 
 
-const COMMON_GLSL = `#version 300 es
+window.COMMON_GLSL = `#version 300 es
 precision highp float;
 
 // ----------- BEGIN COMMON CODE -----------
@@ -109,7 +109,7 @@ vec2 QuakeLavaUV(vec2 coords, float amplitude, float speed, float frequency, flo
 `;
 
 // BUFFER A: COMBINED
-const BUFFER_A_FS = `
+window.BUFFER_A_FS = `
     uniform sampler2D iChannel0; // Noise
     uniform sampler2D iChannel1; // Feedback (Self)
     uniform vec3 iResolution;
@@ -217,7 +217,7 @@ void mainImage(out vec4 fragColor, in vec2 fragCoord) {
     void main() { mainImage(fragColor, gl_FragCoord.xy); }
 `;
 
-const BUFFER_B_FS = `
+window.BUFFER_B_FS = `
     uniform sampler2D iChannel0; 
     uniform vec3 iResolution;
     uniform float smoothedFrequency;
@@ -262,7 +262,7 @@ void main() { mainImage(fragColor, gl_FragCoord.xy); }
 `;
 
 // IMAGE FS: COMBINED
-const IMAGE_FS = `
+window.IMAGE_FS = `
 uniform sampler2D iChannel0; // Buffer B (Planet)
 uniform sampler2D iChannel1; // NEBULA / GALAXY Background
 uniform sampler2D iChannel2; // Io / Stars noise
