@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio Visual Support Documentation</title>
+
+    <!-- CSS First -->
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+
+    <!-- Inline styles for layout that were previously handled by Markdown/Jekyll theme -->
+    <!-- Inline styles for layout -->
+    <style>
+        body {
+            /* Reset body - allow centered layout */
+            margin: 0;
+            padding: 0;
+            font-family: 'Montserrat', sans-serif;
+            color: #ffffff;
+            min-height: 100vh;
+            overflow-x: hidden;
+            /* Prevent horizontal scroll */
+            transition: background-color 0.5s ease;
+        }
+
+        /* Cinema Mode Active State */
+        body.cinema-mode {
+            overflow: hidden !important;
+            /* Lock scrollbar */
+        }
+
+        body.cinema-mode .container,
+        body.cinema-mode #app {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.95);
+            /* subtle shrink effect */
+        }
+
+        /* Container for the content - Centered */
+        .container {
+            position: relative;
+            z-index: 10;
+            max-width: 800px;
+            margin: 40px auto;
+            /* Center horizontally with top margin */
+            background: rgba(0, 0, 0, 0.6);
+            /* Darker for readability over shader */
+            padding: 40px;
+            border-radius: 12px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            transition: all 0.5s ease;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 768px) {
+            .container {
+                margin: 20px;
+                padding: 20px;
+                width: auto;
+                /* Fit to screen */
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            /* Scale Webamp down slightly on mobile */
+            #app {
+                transform: scale(0.8);
+                transform-origin: top right;
+                right: 10px;
+                top: 10px;
+            }
+        }
+
+        /* Force WebAmp on top */
+        #webamp {
+            z-index: 9999 !important;
+        }
+
+        /* Ensure Canvas stays in background */
+        #shaderCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            display: block;
+        }
+
+        /* Standardize headers */
+        h1,
+        h2,
+        h3 {
+            margin-top: 1.5em;
+            margin-bottom: 0.5em;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 10px;
+        }
+
+        /* Links */
+        a {
+            color: #8ab4f8;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Details/Summary */
+        details {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        summary {
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1em;
+            padding: 5px;
+        }
+
+        details[open] summary {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 10px;
+        }
+
+        details ul {
+            list-style-type: none;
+            padding-left: 20px;
+            margin: 10px 0;
+        }
+
+        details li {
+            margin: 5px 0;
+        }
+
+        /* Buttons */
+        .controls {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        #lastUpdated {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #aaa;
+            font-style: italic;
+        }
+
+        /* Webamp Container - Fixed to the right */
+        #app {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 100 !important;
+            transition: all 0.5s ease;
+        }
+
+        /* Cinema Mode Toggle Button */
+        #uiToggle {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            z-index: 200;
+            background: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(2px);
+        }
+
+        #uiToggle:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+
+        .hidden-ui {
+            opacity: 0;
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- WebGL Canvas Background -->
+    <canvas id="shaderCanvas"></canvas>
+
+    <div class="container">
+        <!-- Search Placeholder (Populated by layout-loader.js if needed, or scripts below) -->
+        <div id="searchPlaceholder">
+            <!-- Manually including the search input structure since we are now HTML -->
+            <input type="text" id="searchBar" placeholder="Search Knowledge Base..." oninput="searchResources()"
+                style="width: 100%; box-sizing: border-box; padding: 12px; margin-bottom: 20px; border-radius: 5px; border: none; font-size: 1em;">
+        </div>
+
+        <h1>Audio Visual Support Documentation</h1>
+
+        <p>Welcome to my personal Audio Visual Support knowledge base.</p>
+
+        <p>Having worked in the industry for 10 years, I hope to help provide organized, quick access to comprehensive
+            Audio Visual knowledge base articles I have used over the years to find success across various projects.</p>
+
+        <!-- Biamp Section -->
+        <details data-tags="biamp products general information tesira">
+            <summary>Biamp Products</summary>
+            <div>
+                <ul>
+                    <li><a href="biamp/general-biamp.md">General Information</a></li>
+                    <li><a href="biamp/tesira.md">Tesira</a></li>
+                </ul>
+            </div>
+        </details>
+
+        <!-- Crestron Section -->
+        <details data-tags="crestron products general information">
+            <summary>Crestron Products</summary>
+            <div>
+                <ul>
+                    <li><a href="crestron/general-crestron.md">General Information</a></li>
+                </ul>
+            </div>
+        </details>
+
+        <!-- WyreStorm Section -->
+        <details data-tags="wyrestorm products general information">
+            <summary>WyreStorm Products</summary>
+            <div>
+                <ul>
+                    <li><a href="wyrestorm/general-wyre.md">General Information</a></li>
+                </ul>
+            </div>
+        </details>
+
+        <!-- DIY Section -->
+        <details data-tags="diy mixer">
+            <summary>DIY Projects</summary>
+            <div>
+                <ul>
+                    <li><a href="diy/general-diy.md">General Information</a></li>
+                </ul>
+            </div>
+        </details>
+
+        <h3>About</h3>
+        <p>
+            <strong>Author</strong>: Keaton Stacks<br>
+            <strong>Date Created</strong>: December 29, 2024<br>
+            <strong>Inspiration</strong>: Shout out to <a href="https://prettylightsmusic.com/" target="_blank"
+                style="color: #ffcc00;">Pretty Lights</a> for the vibes 🎵<br>
+            <span id="lastUpdated">Last Updated: Loading...</span>
+        </p>
+
+        <div class="controls">
+            <button onclick="toggleWinamp()" id="toggleButton">🎵 Open Webamp</button>
+            <button onclick="window.toggleVisuals()" id="modeToggleInfo">Mode: Ring</button>
+            <button onclick="toggleLowPower()" id="lowPowerButton">⚡ Low Power: OFF</button>
+        </div>
+    </div> <!-- End Container -->
+
+    <!-- Webamp Container -->
+    <div id="app"></div>
+
+
+    <!-- ============================================ -->
+    <!-- Scripts                                      -->
+    <!-- ============================================ -->
+
+    <!-- Webamp -->
+    <script src="https://unpkg.com/webamp@1.5.0/built/webamp.bundle.min.js"></script>
+    <script src="webamp.js"></script>
+
+    <!-- Versioning -->
+    <script src="lastCommit.js"></script>
+
+    <!-- Search Logic -->
+    <script src="search.js"></script>
+
+    <!-- UI State Manager (Low Power Mode) -->
+    <script src="ui-manager.js"></script>
+
+    <!-- Shader Logic (Order matters: GLSL strings first, then initialization) -->
+    <script src="shader-glsl.js"></script>
+    <script src="shader.js"></script>
+
+    <!-- Cinema Mode Toggle -->
+    <button id="uiToggle" title="Toggle UI Visibility">👁️</button>
+
+    <script>
+        const toggleBtn = document.getElementById('uiToggle');
+        const container = document.querySelector('.container');
+        const appDiv = document.getElementById('app');
+
+        toggleBtn.addEventListener('click', () => {
+            const isHidden = container.classList.contains('hidden-ui');
+            if (isHidden) {
+                container.classList.remove('hidden-ui');
+                appDiv.classList.remove('hidden-ui');
+                toggleBtn.textContent = '👁️';
+                toggleBtn.style.opacity = '1';
+            } else {
+                container.classList.add('hidden-ui');
+                appDiv.classList.add('hidden-ui');
+                toggleBtn.textContent = '❌'; // Standard icon for "close/back"
+                // Make the button itself slightly transparent so it doesn't distract
+                toggleBtn.style.opacity = '0.5';
+            }
+        });
+
+        // Restore button opacity on hover
+        toggleBtn.addEventListener('mouseenter', () => toggleBtn.style.opacity = '1');
+        toggleBtn.addEventListener('mouseleave', () => {
+            if (container.classList.contains('hidden-ui')) toggleBtn.style.opacity = '0.5';
+        });
+    </script>
+</body>
+
+</html>

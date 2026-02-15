@@ -4,12 +4,12 @@ let webamp = null;
 let isWebampVisible = false;
 
 /* Analyser + audio data */
-let analyser        = null;
-let dataArray       = null;
+let analyser = null;
+let dataArray = null;
 let smoothedFrequency = 0;
-let bass            = 0;
-let midrange        = 0;
-let treble          = 0;
+let bass = 0;
+let midrange = 0;
+let treble = 0;
 
 function updateAudioAnalysis() {
     if (!analyser) return;
@@ -23,7 +23,7 @@ function updateAudioAnalysis() {
     bass = freqs.bass;
     midrange = freqs.midrange;
     treble = freqs.treble;
-    
+
     requestAnimationFrame(updateAudioAnalysis);
 }
 
@@ -85,10 +85,13 @@ async function toggleWinamp() {
 function setupAudioAnalysis(analyserNode) {
     try {
         analyser = analyserNode;     // from Webamp
-        analyser.fftSize = 256;      // resolution of frequency data
+        analyser.fftSize = 512;      // 256 Bins (High Res for Ring, also works for Classic)
         dataArray = new Uint8Array(analyser.frequencyBinCount);
 
-        console.log("Audio analysis setup complete.");
+        // Expose globally for shader.js to read
+        window.audioDataArray = dataArray;
+
+        console.log("Audio analysis setup complete. Bins:", dataArray.length);
     } catch (error) {
         console.error("Error during audio analysis setup:", error);
     }
@@ -98,22 +101,29 @@ function setupAudioAnalysis(analyserNode) {
  * Called to push bass/mid/treble/frequency data to a specific WebGL program's uniforms.
  * You might optionally call this from your main shader.js render() loop as well.
  */
-function updateShaderUniforms(gl, program, { smoothedFrequency, bass, midrange, treble }) {
+function updateShaderUniforms(gl, program, { smoothedFrequency, bass, midrange, treble, swirlFactor, colorFactor }) {
     // Make sure we're using the right shader program first
     gl.useProgram(program);
 
     // Pass each band into uniform locations if they exist:
-    let loc = gl.getUniformLocation(program, "uFrequency");
+    let loc = gl.getUniformLocation(program, "smoothedFrequency");
     if (loc) gl.uniform1f(loc, smoothedFrequency);
 
-    loc = gl.getUniformLocation(program, "uBass");
+    loc = gl.getUniformLocation(program, "bass");
     if (loc) gl.uniform1f(loc, bass);
 
-    loc = gl.getUniformLocation(program, "uMidrange");
+    loc = gl.getUniformLocation(program, "midrange");
     if (loc) gl.uniform1f(loc, midrange);
 
-    loc = gl.getUniformLocation(program, "uTreble");
+    loc = gl.getUniformLocation(program, "treble");
     if (loc) gl.uniform1f(loc, treble);
+
+    // Missing uniforms restored:
+    loc = gl.getUniformLocation(program, "uSwirlFactor");
+    if (loc) gl.uniform1f(loc, swirlFactor);
+
+    loc = gl.getUniformLocation(program, "uColorBoost");
+    if (loc) gl.uniform1f(loc, colorFactor);
 }
 
 /**

@@ -1,4 +1,9 @@
-// ---------- 1) Basic Setup ----------
+(function () {
+    // ---------- 1) Basic Setup ----------
+    if (localStorage.getItem('lowPowerMode') === 'true') {
+        console.log('Low Power Mode is ON. WebGL skipped.');
+        return;
+    }
     const canvas = document.getElementById('shaderCanvas');
     const gl = canvas.getContext('webgl2', { alpha: false });
     window.gl = gl; // Expose globally
@@ -15,506 +20,20 @@
         canvas.height = window.innerHeight;
     });
 
-    const QUAD_VS = `#version 300 es
-        precision highp float;
-        layout(location = 0) in vec2 position;
-        out vec2 vUV;
-        void main() {
-            vUV = (position + 1.0) * 0.5;
-            gl_Position = vec4(position, 0.0, 1.0);
-        }`;
+    // QUAD_VS is loaded from shader-glsl.js
 
-        const QUAD_FS = `#version 300 es
-        precision highp float;
+    // QUAD_FS is loaded from shader-glsl.js
 
-        in vec2 vUV;
+    // COMMON_GLSL is loaded from shader-glsl.js
 
-        uniform float uTime;
-        uniform vec2 uRandomOffset;
-        uniform float uBeatPhase;
-        uniform sampler2D iChannel0;
-
-        out vec4 fragColor;
-
-        vec2 QuakeLavaUV(vec2 coords, float amplitude, float speed, float frequency, float time) {
-            float scaledTime = time * speed;
-            vec2 scaledCoords = coords * frequency;
-            float x = sin(scaledTime + scaledCoords.x) * amplitude;
-            float y = sin(scaledTime + scaledCoords.y) * amplitude;
-            return coords + vec2(y, x);
-        }
-
-        float hash(vec2 p) {
-            return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123);
-        }
-
-        float simplexNoise(vec2 p) {
-            vec2 i = floor(p);
-            vec2 f = fract(p);
-            float a = hash(i);
-            float b = hash(i + vec2(1.0, 0.0));
-            float c = hash(i + vec2(0.0, 1.0));
-            float d = hash(i + vec2(1.0, 1.0));
-            vec2 u = f * f * (3.0 - 2.0 * f);
-            return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-        }
-
-        void main() {
-            vec2 jitteredUV = vUV + uRandomOffset * 0.05;
-            jitteredUV += vec2(
-                simplexNoise(vUV * 8.0 + uTime * 0.5),
-                simplexNoise(vUV * 8.0 + uTime * 0.5 + 77.0)
-            ) * 0.015;
-
-            vec2 finalUV = QuakeLavaUV(jitteredUV, 0.03, 1.5, 2.0, uTime + uBeatPhase);
-            fragColor = texture(iChannel0, finalUV);
-        }`;
-
-    const COMMON_GLSL = `#version 300 es
-    precision highp float;
-
-    // ----------- BEGIN COMMON CODE -----------
-    #define TILING 1.0
-
-    // from your "common" snippet:
-    int WrapIndexX(int index){
-        return (index % 16 + 16) % 16;
-    }
-    int WrapIndexY(int index){
-        return (index % 16 + 16) % 16;
-    }
-
-    vec3 sampleJupiterASmoothstepFilter(vec2 uv)
-    {
-        vec2 imageSize = vec2(16, 16);
-        const vec3 image[256] = vec3[](
-        vec3(0.906,0.780, 0.678),vec3(0.906,0.780, 0.678),vec3(0.906,0.780, 0.678),vec3(0.906,0.780, 0.678),vec3(0.808,0.714, 0.647),vec3(0.808,0.714, 0.647),vec3(0.655,0.510, 0.451),vec3(0.655,0.510, 0.451),vec3(0.796,0.643, 0.557),vec3(0.796,0.643, 0.557),vec3(1.000,0.906, 0.808),vec3(1.000,0.906, 0.808),vec3(1.000,0.937, 0.839),vec3(1.000,0.937, 0.839),vec3(0.804,0.671, 0.580),vec3(0.804,0.671, 0.580),
-        vec3(0.733,0.573, 0.471),vec3(0.388,0.157, 0.063),vec3(0.561,0.365, 0.267),vec3(0.561,0.365, 0.267),vec3(0.655,0.510, 0.451),vec3(0.655,0.510, 0.451),vec3(0.655,0.510, 0.451),vec3(0.502,0.310, 0.255),vec3(0.388,0.125, 0.063),vec3(0.592,0.384, 0.310),vec3(0.796,0.643, 0.557),vec3(0.592,0.384, 0.310),vec3(0.804,0.671, 0.580),vec3(0.612,0.404, 0.322),vec3(0.804,0.671, 0.580),vec3(0.804,0.671, 0.580),
-        vec3(0.733,0.573, 0.471),vec3(0.561,0.365, 0.267),vec3(0.561,0.365, 0.267),vec3(0.388,0.157, 0.063),vec3(0.353,0.110, 0.063),vec3(0.353,0.110, 0.063),vec3(0.502,0.310, 0.255),vec3(0.808,0.714, 0.647),vec3(0.592,0.384, 0.310),vec3(0.388,0.125, 0.063),vec3(0.592,0.384, 0.310),vec3(0.592,0.384, 0.310),vec3(0.612,0.404, 0.322),vec3(0.420,0.141, 0.063),vec3(0.420,0.141, 0.063),vec3(0.420,0.141, 0.063),
-        vec3(0.733,0.573, 0.471),vec3(0.733,0.573, 0.471),vec3(0.733,0.573, 0.471),vec3(0.561,0.365, 0.267),vec3(0.353,0.110, 0.063),vec3(0.655,0.510, 0.451),vec3(0.655,0.510, 0.451),vec3(0.655,0.510, 0.451),vec3(0.796,0.643, 0.557),vec3(0.796,0.643, 0.557),vec3(0.592,0.384, 0.310),vec3(0.796,0.643, 0.557),vec3(0.612,0.404, 0.322),vec3(0.612,0.404, 0.322),vec3(0.612,0.404, 0.322),vec3(0.612,0.404, 0.322),
-        vec3(0.710,0.510, 0.420),vec3(0.710,0.510, 0.420),vec3(0.588,0.416, 0.353),vec3(0.588,0.416, 0.353),vec3(0.592,0.451, 0.420),vec3(0.537,0.376, 0.322),vec3(0.537,0.376, 0.322),vec3(0.537,0.376, 0.322),vec3(0.549,0.384, 0.322),vec3(0.549,0.384, 0.322),vec3(0.678,0.502, 0.420),vec3(0.678,0.502, 0.420),vec3(0.667,0.490, 0.431),vec3(0.808,0.604, 0.518),vec3(0.667,0.490, 0.431),vec3(0.667,0.490, 0.431),
-        vec3(0.588,0.416, 0.353),vec3(0.471,0.325, 0.286),vec3(0.588,0.416, 0.353),vec3(0.588,0.416, 0.353),vec3(0.592,0.451, 0.420),vec3(0.482,0.302, 0.224),vec3(0.592,0.451, 0.420),vec3(0.482,0.302, 0.224),vec3(0.678,0.502, 0.420),vec3(0.549,0.384, 0.322),vec3(0.678,0.502, 0.420),vec3(0.808,0.620, 0.518),vec3(0.525,0.380, 0.345),vec3(0.525,0.380, 0.345),vec3(0.808,0.604, 0.518),vec3(0.525,0.380, 0.345),
-        vec3(0.471,0.325, 0.286),vec3(0.471,0.325, 0.286),vec3(0.710,0.510, 0.420),vec3(0.588,0.416, 0.353),vec3(0.537,0.376, 0.322),vec3(0.592,0.451, 0.420),vec3(0.592,0.451, 0.420),vec3(0.592,0.451, 0.420),vec3(0.678,0.502, 0.420),vec3(0.420,0.271, 0.224),vec3(0.678,0.502, 0.420),vec3(0.420,0.271, 0.224),vec3(0.667,0.490, 0.431),vec3(0.667,0.490, 0.431),vec3(0.667,0.490, 0.431),vec3(0.667,0.490, 0.431),
-        vec3(0.588,0.416, 0.353),vec3(0.710,0.510, 0.420),vec3(0.471,0.325, 0.286),vec3(0.353,0.235, 0.224),vec3(0.592,0.451, 0.420),vec3(0.647,0.525, 0.518),vec3(0.647,0.525, 0.518),vec3(0.592,0.451, 0.420),vec3(0.678,0.502, 0.420),vec3(0.420,0.271, 0.224),vec3(0.420,0.271, 0.224),vec3(0.549,0.384, 0.322),vec3(0.388,0.271, 0.259),vec3(0.667,0.490, 0.431),vec3(0.525,0.380, 0.345),vec3(0.388,0.271, 0.259),
-        vec3(0.525,0.388, 0.341),vec3(0.525,0.388, 0.341),vec3(0.353,0.204, 0.161),vec3(0.525,0.388, 0.341),vec3(0.569,0.443, 0.408),vec3(0.451,0.302, 0.259),vec3(0.451,0.302, 0.259),vec3(0.686,0.584, 0.557),vec3(0.518,0.380, 0.353),vec3(0.667,0.545, 0.502),vec3(0.518,0.380, 0.353),vec3(0.667,0.545, 0.502),vec3(0.655,0.506, 0.427),vec3(0.655,0.506, 0.427),vec3(0.518,0.333, 0.224),vec3(0.655,0.506, 0.427),
-        vec3(0.698,0.576, 0.525),vec3(0.698,0.576, 0.525),vec3(0.698,0.576, 0.525),vec3(0.525,0.388, 0.341),vec3(0.686,0.584, 0.557),vec3(0.808,0.729, 0.710),vec3(0.686,0.584, 0.557),vec3(0.569,0.443, 0.408),vec3(0.667,0.545, 0.502),vec3(0.816,0.710, 0.655),vec3(0.816,0.710, 0.655),vec3(0.816,0.710, 0.655),vec3(0.796,0.682, 0.631),vec3(0.796,0.682, 0.631),vec3(0.796,0.682, 0.631),vec3(0.655,0.506, 0.427),
-        vec3(0.698,0.576, 0.525),vec3(0.871,0.765, 0.710),vec3(0.871,0.765, 0.710),vec3(0.698,0.576, 0.525),vec3(0.686,0.584, 0.557),vec3(0.686,0.584, 0.557),vec3(0.808,0.729, 0.710),vec3(0.808,0.729, 0.710),vec3(0.816,0.710, 0.655),vec3(0.816,0.710, 0.655),vec3(0.969,0.875, 0.808),vec3(0.816,0.710, 0.655),vec3(0.796,0.682, 0.631),vec3(0.937,0.859, 0.839),vec3(0.937,0.859, 0.839),vec3(0.937,0.859, 0.839),
-        vec3(0.871,0.765, 0.710),vec3(0.871,0.765, 0.710),vec3(0.871,0.765, 0.710),vec3(0.871,0.765, 0.710),vec3(0.686,0.584, 0.557),vec3(0.808,0.729, 0.710),vec3(0.808,0.729, 0.710),vec3(0.686,0.584, 0.557),vec3(0.667,0.545, 0.502),vec3(0.816,0.710, 0.655),vec3(0.969,0.875, 0.808),vec3(0.816,0.710, 0.655),vec3(0.796,0.682, 0.631),vec3(0.796,0.682, 0.631),vec3(0.518,0.333, 0.224),vec3(0.796,0.682, 0.631),
-        vec3(0.827,0.686, 0.624),vec3(0.655,0.471, 0.376),vec3(0.655,0.471, 0.376),vec3(0.655,0.471, 0.376),vec3(0.580,0.424, 0.353),vec3(0.580,0.424, 0.353),vec3(0.482,0.286, 0.192),vec3(0.776,0.698, 0.678),vec3(0.667,0.514, 0.439),vec3(0.667,0.514, 0.439),vec3(0.816,0.694, 0.624),vec3(0.518,0.333, 0.259),vec3(0.451,0.235, 0.192),vec3(0.451,0.235, 0.192),vec3(0.631,0.459, 0.396),vec3(0.631,0.459, 0.396),
-        vec3(0.827,0.686, 0.624),vec3(0.655,0.471, 0.376),vec3(0.655,0.471, 0.376),vec3(0.655,0.471, 0.376),vec3(0.580,0.424, 0.353),vec3(0.580,0.424, 0.353),vec3(0.580,0.424, 0.353),vec3(0.580,0.424, 0.353),vec3(0.518,0.333, 0.259),vec3(0.816,0.694, 0.624),vec3(0.816,0.694, 0.624),vec3(0.816,0.694, 0.624),vec3(0.451,0.235, 0.192),vec3(0.631,0.459, 0.396),vec3(0.816,0.682, 0.600),vec3(0.816,0.682, 0.600),
-        vec3(0.655,0.471, 0.376),vec3(0.482,0.255, 0.129),vec3(0.827,0.686, 0.624),vec3(0.655,0.471, 0.376),vec3(0.482,0.286, 0.192),vec3(0.580,0.424, 0.353),vec3(0.678,0.561, 0.514),vec3(0.580,0.424, 0.353),vec3(0.667,0.514, 0.439),vec3(0.816,0.694, 0.624),vec3(0.667,0.514, 0.439),vec3(0.667,0.514, 0.439),vec3(0.816,0.682, 0.600),vec3(0.816,0.682, 0.600),vec3(0.631,0.459, 0.396),vec3(0.451,0.235, 0.192),
-        vec3(0.827,0.686, 0.624),vec3(1.000,0.906, 0.871),vec3(1.000,0.906, 0.871),vec3(0.827,0.686, 0.624),vec3(0.776,0.698, 0.678),vec3(0.776,0.698, 0.678),vec3(0.776,0.698, 0.678),vec3(0.776,0.698, 0.678),vec3(0.816,0.694, 0.624),vec3(0.969,0.875, 0.808),vec3(0.969,0.875, 0.808),vec3(0.969,0.875, 0.808),vec3(1.000,0.906, 0.808),vec3(1.000,0.906, 0.808),vec3(0.816,0.682, 0.600),vec3(1.000,0.906, 0.808));
-        int xIndex = int(floor(uv.x * imageSize.x - 0.5));
-        int yIndex = int(floor(uv.y * imageSize.y - 0.5));
-        vec3 sample00 = image[WrapIndexY(yIndex) * 16 + WrapIndexX(xIndex)];
-        vec3 sample10 = image[WrapIndexY(yIndex) * 16 + WrapIndexX(xIndex + 1)];
-        vec3 sample01 = image[WrapIndexY(yIndex + 1) * 16 + WrapIndexX(xIndex)];
-        vec3 sample11 = image[WrapIndexY(yIndex + 1) * 16 + WrapIndexX(xIndex + 1)];
-        float xFactor = smoothstep(0.0, 1.0, fract(uv.x * imageSize.x - 0.5));
-        float yFactor = smoothstep(0.0, 1.0, fract(uv.y * imageSize.y - 0.5));
-        vec3 interpolated = mix(mix(sample00, sample10, xFactor), mix(sample01, sample11, xFactor), yFactor);
-        return interpolated;
-    }
-
-    vec2 hash( vec2 p ) 
-    {
-        p = vec2( dot(p,vec2(127.1,311.7)), dot(p,vec2(269.5,183.3)) );
-        return -1.0 + 2.0*fract(sin(p)*43758.5453123);
-    }
-
-    float simplexNoise( in vec2 p )
-    {
-        const float K1 = 0.366025404; // (sqrt(3)-1)/2;
-        const float K2 = 0.211324865; // (3-sqrt(3))/6;
-        vec2  i = floor( p + (p.x+p.y)*K1 );
-        vec2  a = p - i + (i.x+i.y)*K2;
-        float m = step(a.y,a.x); 
-        vec2  o = vec2(m,1.0-m);
-        vec2  b = a - o + K2;
-        vec2  c = a - 1.0 + 2.0*K2;
-        vec3  h = max( 0.5-vec3(dot(a,a), dot(b,b), dot(c,c) ), 0.0 );
-        vec3  n = h*h*h*h*vec3( dot(a,hash(i+0.0)), dot(b,hash(i+o)), dot(c,hash(i+1.0)));
-        return dot( n, vec3(70.0) );
-    }
-
-    vec3 sampleJupiterBSmoothstepFilter(vec2 uv)
-    {
-        vec2 imageSize = vec2(16, 16);
-        const vec3 image[256] = vec3[](
-        vec3(0.969,0.937, 0.871),vec3(0.557,0.384, 0.329),vec3(0.969,0.937, 0.871),vec3(0.353,0.110, 0.063),vec3(0.753,0.643, 0.588),vec3(0.753,0.643, 0.588),vec3(0.753,0.643, 0.588),vec3(0.753,0.643, 0.588),vec3(0.804,0.690, 0.631),vec3(0.969,0.922, 0.871),vec3(0.643,0.463, 0.396),vec3(0.969,0.922, 0.871),vec3(0.353,0.094, 0.031),vec3(0.784,0.655, 0.569),vec3(0.784,0.655, 0.569),vec3(1.000,0.937, 0.839),
-        vec3(0.969,0.937, 0.871),vec3(0.557,0.384, 0.329),vec3(0.969,0.937, 0.871),vec3(0.557,0.384, 0.329),vec3(0.937,0.906, 0.839),vec3(0.937,0.906, 0.839),vec3(0.569,0.384, 0.341),vec3(0.753,0.643, 0.588),vec3(0.482,0.235, 0.161),vec3(0.804,0.690, 0.631),vec3(0.482,0.235, 0.161),vec3(0.969,0.922, 0.871),vec3(0.569,0.373, 0.298),vec3(1.000,0.937, 0.839),vec3(0.353,0.094, 0.031),vec3(0.784,0.655, 0.569),
-        vec3(0.969,0.937, 0.871),vec3(0.353,0.110, 0.063),vec3(0.761,0.659, 0.600),vec3(0.557,0.384, 0.329),vec3(0.753,0.643, 0.588),vec3(0.388,0.125, 0.094),vec3(0.753,0.643, 0.588),vec3(0.937,0.906, 0.839),vec3(0.482,0.235, 0.161),vec3(0.969,0.922, 0.871),vec3(0.482,0.235, 0.161),vec3(0.969,0.922, 0.871),vec3(0.569,0.373, 0.298),vec3(1.000,0.937, 0.839),vec3(0.784,0.655, 0.569),vec3(0.569,0.373, 0.298),
-        vec3(0.969,0.937, 0.871),vec3(0.353,0.110, 0.063),vec3(0.969,0.937, 0.871),vec3(0.557,0.384, 0.329),vec3(0.937,0.906, 0.839),vec3(0.388,0.125, 0.094),vec3(0.569,0.384, 0.341),vec3(0.937,0.906, 0.839),vec3(0.643,0.463, 0.396),vec3(0.804,0.690, 0.631),vec3(0.643,0.463, 0.396),vec3(0.804,0.690, 0.631),vec3(0.353,0.094, 0.031),vec3(0.784,0.655, 0.569),vec3(0.784,0.655, 0.569),vec3(0.569,0.373, 0.298),
-        vec3(0.451,0.235, 0.161),vec3(0.612,0.447, 0.384),vec3(0.612,0.447, 0.384),vec3(0.612,0.447, 0.384),vec3(0.290,0.141, 0.129),vec3(0.871,0.667, 0.549),vec3(0.290,0.141, 0.129),vec3(0.871,0.667, 0.549),vec3(0.525,0.306, 0.255),vec3(0.698,0.549, 0.482),vec3(0.698,0.549, 0.482),vec3(0.871,0.796, 0.710),vec3(0.722,0.580, 0.502),vec3(0.906,0.796, 0.710),vec3(0.537,0.369, 0.298),vec3(0.722,0.580, 0.502),
-        vec3(0.451,0.235, 0.161),vec3(0.451,0.235, 0.161),vec3(0.451,0.235, 0.161),vec3(0.451,0.235, 0.161),vec3(0.675,0.490, 0.408),vec3(0.675,0.490, 0.408),vec3(0.290,0.141, 0.129),vec3(0.290,0.141, 0.129),vec3(0.353,0.063, 0.031),vec3(0.353,0.063, 0.031),vec3(0.698,0.549, 0.482),vec3(0.525,0.306, 0.255),vec3(0.722,0.580, 0.502),vec3(0.537,0.369, 0.298),vec3(0.353,0.157, 0.094),vec3(0.722,0.580, 0.502),
-        vec3(0.612,0.447, 0.384),vec3(0.773,0.659, 0.612),vec3(0.612,0.447, 0.384),vec3(0.773,0.659, 0.612),vec3(0.675,0.490, 0.408),vec3(0.675,0.490, 0.408),vec3(0.871,0.667, 0.549),vec3(0.871,0.667, 0.549),vec3(0.698,0.549, 0.482),vec3(0.871,0.796, 0.710),vec3(0.871,0.796, 0.710),vec3(0.525,0.306, 0.255),vec3(0.722,0.580, 0.502),vec3(0.722,0.580, 0.502),vec3(0.722,0.580, 0.502),vec3(0.537,0.369, 0.298),
-        vec3(0.612,0.447, 0.384),vec3(0.937,0.875, 0.839),vec3(0.612,0.447, 0.384),vec3(0.773,0.659, 0.612),vec3(0.482,0.314, 0.267),vec3(0.482,0.314, 0.267),vec3(0.675,0.490, 0.408),vec3(0.675,0.490, 0.408),vec3(0.871,0.796, 0.710),vec3(0.525,0.306, 0.255),vec3(0.871,0.796, 0.710),vec3(0.525,0.306, 0.255),vec3(0.906,0.796, 0.710),vec3(0.353,0.157, 0.094),vec3(0.722,0.580, 0.502),vec3(0.722,0.580, 0.502),
-        vec3(0.525,0.388, 0.341),vec3(0.729,0.592, 0.525),vec3(0.322,0.188, 0.161),vec3(0.937,0.796, 0.710),vec3(0.569,0.431, 0.384),vec3(0.353,0.188, 0.161),vec3(1.000,0.922, 0.839),vec3(0.569,0.431, 0.384),vec3(0.871,0.729, 0.612),vec3(0.569,0.424, 0.376),vec3(0.718,0.576, 0.494),vec3(0.871,0.729, 0.612),vec3(0.937,0.827, 0.776),vec3(0.678,0.537, 0.471),vec3(0.678,0.537, 0.471),vec3(0.549,0.396, 0.322),
-        vec3(0.525,0.388, 0.341),vec3(0.937,0.796, 0.710),vec3(0.525,0.388, 0.341),vec3(0.937,0.796, 0.710),vec3(0.569,0.431, 0.384),vec3(0.353,0.188, 0.161),vec3(0.353,0.188, 0.161),vec3(0.569,0.431, 0.384),vec3(0.420,0.271, 0.259),vec3(0.569,0.424, 0.376),vec3(0.718,0.576, 0.494),vec3(0.569,0.424, 0.376),vec3(0.678,0.537, 0.471),vec3(0.678,0.537, 0.471),vec3(0.937,0.827, 0.776),vec3(0.678,0.537, 0.471),
-        vec3(0.525,0.388, 0.341),vec3(0.525,0.388, 0.341),vec3(0.322,0.188, 0.161),vec3(0.525,0.388, 0.341),vec3(0.353,0.188, 0.161),vec3(0.784,0.675, 0.612),vec3(0.569,0.431, 0.384),vec3(0.569,0.431, 0.384),vec3(0.718,0.576, 0.494),vec3(0.569,0.424, 0.376),vec3(0.569,0.424, 0.376),vec3(0.420,0.271, 0.259),vec3(0.549,0.396, 0.322),vec3(0.549,0.396, 0.322),vec3(0.937,0.827, 0.776),vec3(0.808,0.682, 0.624),
-        vec3(0.322,0.188, 0.161),vec3(0.937,0.796, 0.710),vec3(0.322,0.188, 0.161),vec3(0.729,0.592, 0.525),vec3(0.784,0.675, 0.612),vec3(0.784,0.675, 0.612),vec3(0.784,0.675, 0.612),vec3(0.569,0.431, 0.384),vec3(0.718,0.576, 0.494),vec3(0.569,0.424, 0.376),vec3(0.871,0.729, 0.612),vec3(0.718,0.576, 0.494),vec3(0.549,0.396, 0.322),vec3(0.549,0.396, 0.322),vec3(0.808,0.682, 0.624),vec3(0.937,0.827, 0.776),
-        vec3(0.847,0.776, 0.722),vec3(1.000,0.984, 0.937),vec3(0.847,0.776, 0.722),vec3(0.847,0.776, 0.722),vec3(0.557,0.396, 0.341),vec3(0.761,0.651, 0.588),vec3(0.761,0.651, 0.588),vec3(0.761,0.651, 0.588),vec3(0.761,0.651, 0.624),vec3(0.761,0.651, 0.624),vec3(0.761,0.651, 0.624),vec3(0.557,0.380, 0.376),vec3(0.804,0.718, 0.655),vec3(0.804,0.718, 0.655),vec3(0.804,0.718, 0.655),vec3(0.804,0.718, 0.655),
-        vec3(0.847,0.776, 0.722),vec3(0.847,0.776, 0.722),vec3(0.698,0.569, 0.506),vec3(0.847,0.776, 0.722),vec3(0.969,0.906, 0.839),vec3(0.557,0.396, 0.341),vec3(0.969,0.906, 0.839),vec3(0.969,0.906, 0.839),vec3(0.969,0.922, 0.871),vec3(0.969,0.922, 0.871),vec3(0.969,0.922, 0.871),vec3(0.969,0.922, 0.871),vec3(1.000,0.969, 0.937),vec3(1.000,0.969, 0.937),vec3(0.420,0.220, 0.094),vec3(0.612,0.467, 0.373),
-        vec3(0.847,0.776, 0.722),vec3(0.847,0.776, 0.722),vec3(0.847,0.776, 0.722),vec3(1.000,0.984, 0.937),vec3(0.353,0.141, 0.094),vec3(0.353,0.141, 0.094),vec3(0.969,0.906, 0.839),vec3(0.557,0.396, 0.341),vec3(0.761,0.651, 0.624),vec3(0.761,0.651, 0.624),vec3(0.761,0.651, 0.624),vec3(0.761,0.651, 0.624),vec3(1.000,0.969, 0.937),vec3(0.420,0.220, 0.094),vec3(1.000,0.969, 0.937),vec3(0.420,0.220, 0.094),
-        vec3(0.549,0.365, 0.290),vec3(0.847,0.776, 0.722),vec3(0.549,0.365, 0.290),vec3(0.847,0.776, 0.722),vec3(0.557,0.396, 0.341),vec3(0.969,0.906, 0.839),vec3(0.969,0.906, 0.839),vec3(0.761,0.651, 0.588),vec3(0.969,0.922, 0.871),vec3(0.353,0.110, 0.129),vec3(0.969,0.922, 0.871),vec3(0.761,0.651, 0.624),vec3(1.000,0.969, 0.937),vec3(0.804,0.718, 0.655),vec3(1.000,0.969, 0.937),vec3(0.420,0.220, 0.094));
-        int xIndex = int(floor(uv.x * imageSize.x - 0.5));
-        int yIndex = int(floor(uv.y * imageSize.y - 0.5));
-        vec3 sample00 = image[WrapIndexY(yIndex) * 16 + WrapIndexX(xIndex)];
-        vec3 sample10 = image[WrapIndexY(yIndex) * 16 + WrapIndexX(xIndex + 1)];
-        vec3 sample01 = image[WrapIndexY(yIndex + 1) * 16 + WrapIndexX(xIndex)];
-        vec3 sample11 = image[WrapIndexY(yIndex + 1) * 16 + WrapIndexX(xIndex + 1)];
-        float xFactor = smoothstep(0.0, 1.0, fract(uv.x * imageSize.x - 0.5));
-        float yFactor = smoothstep(0.0, 1.0, fract(uv.y * imageSize.y - 0.5));
-        vec3 interpolated = mix(mix(sample00, sample10, xFactor), mix(sample01, sample11, xFactor), yFactor);
-        return interpolated;
-    }
-
-    vec2 QuakeLavaUV(vec2 coords, float amplitude, float speed, float frequency, float time)
-    {
-        float scaledTime = time * speed;
-        vec2 scaledCoords = coords * frequency;
-        float x = sin(scaledTime + scaledCoords.x) * amplitude;
-        float y = sin(scaledTime + scaledCoords.y) * amplitude;
-        return coords + vec2(y, x);
-    }
-
-    float SeedFromResolution(vec3 resolution) {
-        return resolution.x - resolution.y;
-    }
-    // ----------- END COMMON CODE -----------
-    `;
-
-// ---------- 3) Buffer A Fragment Shader (Swirling Jupiter) ----------
-const BUFFER_A_FS = `
-    uniform sampler2D iChannel0; 
-    uniform sampler2D iChannel1; 
-    uniform vec3 iResolution;
-    uniform float iTime;
-    uniform int iFrame;
-
-    uniform float uColorBoost;  
-    uniform float uSwirlFactor;
-
-    uniform float smoothedFrequency; 
-    uniform float bass; 
-    uniform float midrange; 
-    uniform float treble;
-
-    out vec4 fragColor;
-
-void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-    // Check if this is the first frame or resolution change
-    bool firstFrame = (iFrame == 0);
-    float oldTextureSeed = texture(iChannel1, vec2(0.0, 0.0)).w;
-    float newTextureSeed = length(iResolution);
-    bool resolutionChange = (oldTextureSeed != newTextureSeed);
-
-    // Convert fragCoord to UV space
-    float shorterSide = min(iResolution.x, iResolution.y);
-    vec2 uv = fract(fragCoord / shorterSide - vec2(0.5, 0.5));
-
-    // Default fallback for music uniforms when no audio is playing
-    float bassValue = max(bass, 0.1);           // Default to 0.1
-    float midrangeValue = max(midrange, 0.1);   // Default to 0.1
-    float trebleValue = max(treble, 0.1);       // Default to 0.1
-    float smoothedFrequencyValue = max(smoothedFrequency, 0.1);
-
-    // Noise and swirling effects
-    float sourceNoise = texture(iChannel0, uv + vec2(-0.03, 0.0) * iTime).x * (1.0 + bassValue * 0.2);
-    float sourceMask = clamp(((sourceNoise - 0.5) * 10.0) + 0.5, 0.0, 1.0);
-
-    // Enhanced swirling turbulence with music influence
-    vec2 turbulenceUVA = uv + vec2(0.01, 0.02) * sin(iTime + bassValue * 5.0);
-    vec2 turbulenceA = vec2(
-        sin(turbulenceUVA.x * 15.0 + smoothedFrequencyValue * 3.0),
-        cos(turbulenceUVA.y * 15.0 + smoothedFrequencyValue * 3.0)
-    );
-
-    vec2 turbulenceUVB = uv * 2.0 + vec2(0.02, 0.01) * cos(iTime + trebleValue * 3.0);
-    vec2 turbulenceB = vec2(
-        sin(turbulenceUVB.x * 25.0 + smoothedFrequencyValue * 2.0),
-        cos(turbulenceUVB.y * 25.0 + smoothedFrequencyValue * 2.0)
-    );
-
-    // Combine turbulence for dynamic swirls
-    vec2 combinedVelocity = turbulenceA * (0.03 + bassValue * 0.01) + turbulenceB * (0.015 + trebleValue * 0.01);
-
-    // Adjust colors dynamically based on midrange
-    vec3 jupiterA = vec3(0.9, 0.6, 0.4) * (1.0 + uColorBoost + midrangeValue * 0.3);
-    vec3 jupiterB = vec3(0.8, 0.5, 0.3) * (1.0 + uColorBoost + midrangeValue * 0.3);
-
-    // Smooth blend between layers
-    vec3 sourceColor = mix(jupiterA, jupiterB, smoothstep(0.4, 0.6, sourceMask));
-
-    // Frame blending with subtle persistence
-    if (firstFrame || resolutionChange) {
-        fragColor = vec4(sourceColor, newTextureSeed);
-    } else {
-        vec3 previousFrame = texture(iChannel1, uv + combinedVelocity).xyz;
-        fragColor = vec4(mix(previousFrame, sourceColor, sourceMask * 0.3), newTextureSeed);
-    }
-}
-
-
-
-    void main() {
-        mainImage(fragColor, gl_FragCoord.xy);
-    }
-`;
+    // ---------- 3) Buffer A Fragment Shader (Swirling Jupiter) ----------
+    // BUFFER_A_FS is loaded from shader-glsl.js
 
     // ---------- 4) Buffer B Fragment Shader (Sharpen) ----------
-    const BUFFER_B_FS = `
-    uniform sampler2D iChannel0; 
-    uniform vec3 iResolution;
+    // BUFFER_B_FS is loaded from shader-glsl.js
 
-    uniform float smoothedFrequency;
-
-    out vec4 fragColor;
-
-    #define strength 5.0
-    #define clampValue 0.02
-
-void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-    vec2 uv = fragCoord / iResolution.xy;
-
-    // Default fallback for music uniforms
-    float smoothedFrequencyValue = max(smoothedFrequency, 0.1);
-
-    // Dynamic sharpening strength based on music intensity
-    float dynamicStrength = mix(strength, strength * 1.5, smoothedFrequencyValue * 0.1);
-
-    // Gather neighboring samples
-    vec3 centerSample = texture(iChannel0, uv).xyz;
-    vec3 northSample  = texture(iChannel0, uv + vec2(0.0,  1.0 / iResolution.y)).xyz;
-    vec3 southSample  = texture(iChannel0, uv + vec2(0.0, -1.0 / iResolution.y)).xyz;
-    vec3 eastSample   = texture(iChannel0, uv + vec2(1.0 / iResolution.x, 0.0)).xyz;
-    vec3 westSample   = texture(iChannel0, uv + vec2(-1.0 / iResolution.x, 0.0)).xyz;
-
-    // Edge detection for adaptive sharpening
-    vec3 gradient = abs(northSample + southSample - eastSample - westSample);
-    float edgeFactor = smoothstep(0.2, 0.5, length(gradient)); // Higher value near edges
-
-    // Adaptive sharpening: Stronger in smooth areas, weaker at edges
-    vec3 sharpen = (4.0 * centerSample - northSample - southSample - eastSample - westSample) * dynamicStrength * (1.0 - edgeFactor);
-
-    // Introduce slight noise-based variation for organic feel
-    vec3 noise = vec3(fract(sin(dot(uv, vec2(12.9898, 78.233))) * 43758.5453));
-    sharpen += noise * smoothedFrequencyValue * 0.005; // Subtle noise addition
-
-    // Clamp sharpen values to prevent artifacts
-    sharpen = clamp(sharpen, -clampValue, clampValue);
-
-    // Combine sharpened texture with original
-    vec3 finalColor = centerSample + sharpen;
-
-    // Optional: Fade sharpening based on smooth frequency for dynamic visual changes
-    finalColor = mix(centerSample, finalColor, 0.8 + smoothedFrequencyValue * 0.2);
-
-    fragColor = vec4(finalColor, 1.0);
-}
-
-    void main() {
-        mainImage(fragColor, gl_FragCoord.xy);
-    }
-`;
-
-// ---------- Final Image Fragment Shader ----------
-const IMAGE_FS = `
-// Final pass that draws Jupiter, Io, stars, and nebula
-uniform sampler2D iChannel0; // Sharpened Jupiter (Buffer B)
-uniform sampler2D iChannel1; // Unsharpened swirl (Buffer A)
-uniform sampler2D iChannel2; // Io texture
-uniform sampler2D iChannel3; // Nebula (or star) texture
-
-uniform vec3 iResolution;
-uniform float iTime;
-
-// Audio uniforms (fallback included for safety)
-uniform float bass;
-uniform float midrange;
-uniform float treble;
-uniform float smoothedFrequency;
-
-out vec4 fragColor;
-
-#define BackgroundColor vec3(0.0941, 0.1019, 0.0901)
-
-vec4 generateSphereSurfaceWithMask(vec2 uv, float radius) {
-    float radiusSquared = radius * radius;
-    float uvLengthSquared = dot(uv, uv);
-    float uvLength = sqrt(uvLengthSquared);
-    float mask = step(uvLength, radius);
-    vec3 surface = vec3(0.0);
-    if (mask > 0.0) {
-        surface = vec3(uv / radius, sqrt(radiusSquared - uvLengthSquared));
-    } else {
-        surface = vec3(uv / uvLength, uvLength - radius);
-    }
-    return vec4(surface, mask);
-}
-
-vec2 generateSphericalUV(vec3 position, float spin) {
-    float width = sqrt(1.0 - position.y * position.y);
-    float generatrixX = position.x / width;
-    vec2 generatrix = vec2(generatrixX, position.y);
-    vec2 uv = fract(asin(generatrix) / 3.14159 + vec2(0.5 + spin, 0.5)); // Use fract
-    return uv;
-}
-
-mat3 createRotationMatrix(float pitch, float roll) {
-    float cosPitch = cos(pitch);
-    float sinPitch = sin(pitch);
-    float cosRoll = cos(roll);
-    float sinRoll = sin(roll);
-    return mat3(
-        cosRoll, -sinRoll * cosPitch, sinRoll * sinPitch,
-        sinRoll, cosRoll * cosPitch, -cosRoll * sinPitch,
-        0.0, sinPitch, cosPitch
-    );
-}
-
-vec4 atmosphere(vec4 sphereSurfaceWithMask, vec3 lightDirection, vec3 atmosphereColor, float haloWidth, float minAtmosphere, float maxAtmosphere, float falloff) {
-    vec3 absorbtion = vec3(2.0, 3.0, 4.0);
-    float inverseWidth = 1.0 / haloWidth;
-    float fresnelBlend = pow(1.0 - sphereSurfaceWithMask.z, falloff);
-    float amount = mix(minAtmosphere, maxAtmosphere, fresnelBlend);
-    vec3 normal = sphereSurfaceWithMask.xyz;
-    if (sphereSurfaceWithMask.w < 0.5) {
-        float haloBlend = pow(max(1.0 - sphereSurfaceWithMask.z * inverseWidth, 0.0), 5.0);
-        amount = haloBlend * maxAtmosphere;
-        normal = vec3(sphereSurfaceWithMask.xy, 0.0);
-    }
-    float light = max((dot(normal, lightDirection) + 0.3) / 1.3, 0.0);
-    vec3 absorbedLight = vec3(pow(light, absorbtion.x), pow(light, absorbtion.y), pow(light, absorbtion.z));
-    vec3 litAtmosphere = absorbedLight * atmosphereColor;
-    return vec4(litAtmosphere, amount);
-}
-
-void mainImage(out vec4 fragColor, in vec2 fragCoord) {
-    float shorterSide = min(iResolution.x, iResolution.y);
-    float aspectRatio = iResolution.x / iResolution.y;
-    vec2 offset = iResolution.x > iResolution.y ? vec2(aspectRatio, 1.0) * 0.5 : vec2(1.0, 1.0 / aspectRatio) * 0.5;
-
-    vec2 uv = (fragCoord / shorterSide - offset);
-    vec3 lightDirection = normalize(vec3(1.0, 1.0, 0.8));
-
-    // Fallback audio values to ensure stability
-    float bassValue = max(bass, 0.1);
-    float midrangeValue = max(midrange, 0.1);
-    float trebleValue = max(treble, 0.1);
-    float smoothedFrequencyValue = max(smoothedFrequency, 0.1);
-
-    // Jupiter Surface and Lighting
-    vec4 jupiterSurfaceWithMask = generateSphereSurfaceWithMask(uv + vec2(0.2, 0.15), 0.6);
-
-    // Base light intensity calculation using the dot product
-    float lightIntensity = max(dot(lightDirection, jupiterSurfaceWithMask.xyz), 0.0);
-
-    // Smooth gradient for transition using a soft Fresnel effect
-    float gradientFade = pow(1.0 - lightIntensity, 3.0); // Sharper falloff for smoother fade
-
-    // Final lighting calculation with a minimum ambient factor
-    float jupiterLight = mix(0.05, pow(lightIntensity, 0.8), lightIntensity); // 0.05 ambient for shadowed areas
-
-    // Add ambient light for the unlit side (proportional to the gradient)
-    vec3 ambientLight = vec3(0.08, 0.08, 0.1) * gradientFade; // Adjust slightly blue ambient for realism
-
-    // Atmosphere effects
-    vec4 jupiterAtmosphere = atmosphere(
-        jupiterSurfaceWithMask, 
-        lightDirection, 
-        vec3(1.0, 0.8, 0.6) * (2.0 + bassValue * 0.2), // Audio-driven brightness
-        0.3,
-        0.1,
-        0.8,
-        3.0
-    );
-
-    // Mask to ensure effects apply only to the sphere
-    float jupiterMask = clamp(jupiterSurfaceWithMask.w, 0.0, 1.0);
-
-    // Apply rotation to the sphere surface
-    mat3 jupiterRotationMatrix = createRotationMatrix(-0.2, 0.3);
-    vec3 rotatedJupiter = jupiterRotationMatrix * (jupiterSurfaceWithMask.xyz * jupiterMask);
-
-    // Combine light and ambient for final lighting
-    vec3 finalLight = ambientLight + (jupiterLight * vec3(1.0, 0.9, 0.8)); // Slightly warm lit areas
-
-
-    // Sacred Geometry: Logarithmic Swirl
-    float phi = 1.618; // Golden ratio
-    float angle = atan(rotatedJupiter.y, rotatedJupiter.x);
-    float radius = length(rotatedJupiter.xy);
-    float spiralFactor = radius * phi; // Spiral dynamics
-
-    vec2 nautilusUV = vec2(
-        radius * cos(angle + iTime * 0.3 + spiralFactor), // Logarithmic rotation
-        radius * sin(angle + iTime * 0.3 + spiralFactor)
-    ) * 0.4; // Scaling factor
-
-    // Combine with base spherical UVs
-    vec2 jupiterUV = generateSphericalUV(rotatedJupiter, iTime * 0.02) + nautilusUV;
-
-    // Add noise-driven refinement to the spiral
-    vec2 noiseSwirl = texture(iChannel0, fract(uv * 3.0 + nautilusUV * 5.0 + vec2(iTime * 0.1, -iTime * 0.1))).rg;
-    jupiterUV += noiseSwirl * 0.03; // Subtle randomness
-
-    // Scale and Wrap UVs
-    vec2 scaledUV = fract(jupiterUV * 2.2 + vec2(0.0, 0.8));
-    vec3 jupiterTexture = texture(iChannel0, scaledUV).xyz;
-
-    // Enhance Jupiter Texture with treble
-    jupiterTexture *= vec3(
-        pow(jupiterTexture.r, 3.0 + trebleValue * 0.5),
-        pow(jupiterTexture.g, 6.0 + trebleValue * 0.5),
-        pow(jupiterTexture.b, 8.0 + trebleValue * 0.5)
-    ) * 3.0;
-
-    // Io Moon Surface and Lighting
-    vec4 ioSurfaceWithMask = generateSphereSurfaceWithMask(uv + vec2(-0.32, -0.2), 0.07);
-
-    // Static lighting intensity
-    float ioLightIntensity = 0.5; // Fixed value for testing
-    float ioLight = pow(max(dot(lightDirection, ioSurfaceWithMask.xyz), 0.0), ioLightIntensity);
-
-
-    vec4 ioAtmosphere = atmosphere(
-        ioSurfaceWithMask, 
-        lightDirection, 
-        vec3(1.0, 0.9, 0.8) * 1.5, 
-        0.06, 0.03, 1.0, 4.0
-    );
-
-    float ioMask = clamp(ioSurfaceWithMask.w, 0.0, 1.0);
-    mat3 ioRotationMatrix = createRotationMatrix(0.4, -0.1);
-    vec3 rotatedIo = ioRotationMatrix * (ioSurfaceWithMask.xyz * ioMask);
-    vec2 ioUV = generateSphericalUV(rotatedIo, -iTime * 0.05);
-    vec3 ioTexture = texture(iChannel2, fract(ioUV)).xyz;
-
-
-    // Stars: Lowered brightness & static UVs
-    vec3 stars = vec3(pow(texture(iChannel1, uv).x, 20.0)) * vec3(1.2, 0.5, 0.4) * 2.0;
-
-    // Nebula: Remove audio influence
-    vec3 nebula = texture(iChannel3, uv).xyz * vec3(0.9, 0.3, 0.4);
-
-    // Add Nebula to Stars
-    stars += nebula;
-
-
-    // Combining Layers
-    vec3 jupiterWithBackground = mix(stars, jupiterTexture * jupiterLight, jupiterMask);
-    vec3 jupiterWithAtmosphere = mix(jupiterWithBackground, jupiterAtmosphere.rgb, jupiterAtmosphere.a);
-    vec3 ioWithAtmosphere = mix(ioTexture * ioLight, ioAtmosphere.rgb, ioAtmosphere.a);
-
-    fragColor = vec4(jupiterWithAtmosphere + ioWithAtmosphere, 1.0);
-}
-
-
-void main() {
-    mainImage(fragColor, gl_FragCoord.xy);
-}
-`;
+    // ---------- Final Image Fragment Shader ----------
+    // IMAGE_FS is loaded from shader-glsl.js
 
     // ---------- 6) Helper to compile & link WebGL programs ----------
     function createShader(gl, type, source) {
@@ -549,251 +68,296 @@ void main() {
         gl.deleteShader(fs);
         return prog;
     }
-// =============================
-//  Update Pass Uniforms Helper
-// =============================
-function updatePassUniforms(gl, program, resolution, time, textureBindings) {
-    // 1) Use the correct shader program
-    gl.useProgram(program);
+    // =============================
+    //  Update Pass Uniforms Helper
+    // =============================
+    function updatePassUniforms(gl, program, resolution, time, textureBindings) {
+        // 1) Use the correct shader program
+        gl.useProgram(program);
 
-    // 2) Set iResolution
-    let loc = gl.getUniformLocation(program, "iResolution");
-    if (loc) {
-        gl.uniform3f(loc, resolution[0], resolution[1], resolution[2]);
-    }
-
-    // 3) Set iTime
-    loc = gl.getUniformLocation(program, "iTime");
-    if (loc) {
-        gl.uniform1f(loc, time);
-    }
-
-    // 4) Bind & set each texture
-    // e.g. textureBindings = [
-    //   { texture: noiseTex, uniformName: "iChannel0" },
-    //   { texture: fboA0.tex, uniformName: "iChannel1" },
-    //   ...
-    // ]
-    textureBindings.forEach((tb, index) => {
-        // Activate texture unit
-        gl.activeTexture(gl.TEXTURE0 + index);
-        gl.bindTexture(gl.TEXTURE_2D, tb.texture);
-
-        // Set uniform sampler2D
-        loc = gl.getUniformLocation(program, tb.uniformName);
+        // 2) Set iResolution
+        let loc = gl.getUniformLocation(program, "iResolution");
         if (loc) {
-            gl.uniform1i(loc, index);
+            gl.uniform3f(loc, resolution[0], resolution[1], resolution[2]);
         }
-    });
-}
+
+        // 3) Set iTime
+        loc = gl.getUniformLocation(program, "iTime");
+        if (loc) {
+            gl.uniform1f(loc, time);
+        }
+
+        // 4) Bind & set each texture
+        // e.g. textureBindings = [
+        //   { texture: noiseTex, uniformName: "iChannel0" },
+        //   { texture: fboA0.tex, uniformName: "iChannel1" },
+        //   ...
+        // ]
+        textureBindings.forEach((tb, index) => {
+            // Activate texture unit
+            gl.activeTexture(gl.TEXTURE0 + index);
+            gl.bindTexture(gl.TEXTURE_2D, tb.texture);
+
+            // Set uniform sampler2D
+            loc = gl.getUniformLocation(program, tb.uniformName);
+            if (loc) {
+                gl.uniform1i(loc, index);
+            }
+        });
+    }
 
     // ---------- 7) Create Pass Programs (A, B, Final) ----------
-const vs = QUAD_VS;
-const fsA = COMMON_GLSL + BUFFER_A_FS;
-const fsB = COMMON_GLSL + BUFFER_B_FS;
-const fsFinal = COMMON_GLSL + IMAGE_FS;
+    const vs = QUAD_VS;
+    const fsA = COMMON_GLSL + BUFFER_A_FS;
+    const fsB = COMMON_GLSL + BUFFER_B_FS;
+    const fsFinal = COMMON_GLSL + IMAGE_FS;
 
-const progA = createProgram(vs, fsA);    // Buffer A
-const progB = createProgram(vs, fsB);    // Buffer B
-const progFinal = createProgram(vs, fsFinal); // Final
+    const progA = createProgram(vs, fsA);    // Buffer A
+    const progB = createProgram(vs, fsB);    // Buffer B
+    const progFinal = createProgram(vs, fsFinal); // Final
 
-if (!progA || !progB || !progFinal) {
-    console.error("Failed to create all programs. Shutting down the renderer.");
-    throw new Error("Shader program creation failed.");
-}
+    if (!progA || !progB || !progFinal) {
+        console.error("Failed to create all programs. Shutting down the renderer.");
+        throw new Error("Shader program creation failed.");
+    }
 
-// ---------- 8) Full-Screen Quad Setup ----------
-const quadVbo = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
-const quadVerts = new Float32Array([
-    -1, -1, 1, -1, -1, 1,
-    -1, 1, 1, -1, 1, 1
-]);
-gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
+    // ---------- 8) Full-Screen Quad Setup ----------
+    const quadVbo = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
+    const quadVerts = new Float32Array([
+        -1, -1, 1, -1, -1, 1,
+        -1, 1, 1, -1, 1, 1
+    ]);
+    gl.bufferData(gl.ARRAY_BUFFER, quadVerts, gl.STATIC_DRAW);
 
-function setupVertexAttrib(program) {
-    const loc = gl.getAttribLocation(program, 'position');
-    gl.enableVertexAttribArray(loc);
-    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
-}
+    function setupVertexAttrib(program) {
+        const loc = gl.getAttribLocation(program, 'position');
+        gl.enableVertexAttribArray(loc);
+        gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    }
 
-// ---------- 9) Create framebuffers for A & B ----------
-const BUFFER_WIDTH = 512;
-const BUFFER_HEIGHT = 512;
+    // ---------- 9) Create framebuffers for A & B ----------
+    const BUFFER_WIDTH = 512;
+    const BUFFER_HEIGHT = 512;
 
-function createFBO(width, height) {
-    const fbo = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+    function createFBO(width, height) {
+        const fbo = gl.createFramebuffer();
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
 
-    const tex = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, tex);
+        const tex = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, tex);
 
-    // Enable seamless tiling
+        // Enable seamless tiling
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+
+        gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+        return { fbo, tex };
+    }
+
+    const fboA0 = createFBO(BUFFER_WIDTH, BUFFER_HEIGHT);
+    const fboA1 = createFBO(BUFFER_WIDTH, BUFFER_HEIGHT);
+    let currentA = 0;
+
+    const fboB = createFBO(BUFFER_WIDTH, BUFFER_HEIGHT);
+
+    // ---------- 10) Create noise texture (for iChannel0 in Buffer A) ----------
+    const NOISE_WIDTH = 256, NOISE_HEIGHT = 256;
+    const noiseData = new Uint8Array(NOISE_WIDTH * NOISE_HEIGHT * 4);
+    for (let i = 0; i < noiseData.length; i++) {
+        noiseData[i] = Math.floor(Math.random() * 256);
+    }
+    const noiseTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, noiseTex);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, NOISE_WIDTH, NOISE_HEIGHT, 0, gl.RGBA, gl.UNSIGNED_BYTE, noiseData);
 
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);
+    // ---------- Create AUDIO Texture ----------
+    const AUDIO_TEX_WIDTH = 256;
+    const AUDIO_TEX_HEIGHT = 1;
+    const audioTex = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, audioTex);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    // Initialize with black
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, AUDIO_TEX_WIDTH, AUDIO_TEX_HEIGHT, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, null);
 
-    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-    return { fbo, tex };
-}
-
-const fboA0 = createFBO(BUFFER_WIDTH, BUFFER_HEIGHT);
-const fboA1 = createFBO(BUFFER_WIDTH, BUFFER_HEIGHT);
-let currentA = 0;
-
-const fboB = createFBO(BUFFER_WIDTH, BUFFER_HEIGHT);
-
-// ---------- 10) Create noise texture (for iChannel0 in Buffer A) ----------
-const NOISE_WIDTH = 256, NOISE_HEIGHT = 256;
-const noiseData = new Uint8Array(NOISE_WIDTH * NOISE_HEIGHT * 4);
-for (let i = 0; i < noiseData.length; i++) {
-    noiseData[i] = Math.floor(Math.random() * 256);
-}
-const noiseTex = gl.createTexture();
-gl.bindTexture(gl.TEXTURE_2D, noiseTex);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, NOISE_WIDTH, NOISE_HEIGHT, 0, gl.RGBA, gl.UNSIGNED_BYTE, noiseData);
-
-// Load texture from URL
-function loadTexture(url) {
-    const texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-
-    const level = 0;
-    const internalFormat = gl.RGBA;
-    const width = 1;
-    const height = 1;
-    const border = 0;
-    const srcFormat = gl.RGBA;
-    const srcType = gl.UNSIGNED_BYTE;
-    const pixel = new Uint8Array([0, 0, 255, 255]); // blue
-    gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, width, height, border, srcFormat, srcType, pixel);
-
-    const image = new Image();
-    image.onload = function() {
+    // Load texture from URL
+    function loadTexture(url) {
+        const texture = gl.createTexture();
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
 
-        if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
-            gl.generateMipmap(gl.TEXTURE_2D);
-        } else {
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        const level = 0;
+        const internalFormat = gl.RGBA;
+        const width = 1;
+        const height = 1;
+        const border = 0;
+        const srcFormat = gl.RGBA;
+        const srcType = gl.UNSIGNED_BYTE;
+        const pixel = new Uint8Array([0, 0, 255, 255]); // blue
+        gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, width, height, border, srcFormat, srcType, pixel);
+
+        const image = new Image();
+        image.onload = function () {
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.texImage2D(gl.TEXTURE_2D, level, internalFormat, srcFormat, srcType, image);
+
+            if (isPowerOf2(image.width) && isPowerOf2(image.height)) {
+                gl.generateMipmap(gl.TEXTURE_2D);
+            } else {
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+                gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+            }
+        };
+
+        image.onerror = function () {
+            console.error('Failed to load texture from URL:', url);
+        };
+
+        image.src = url;
+
+        return texture;
+    }
+
+    function isPowerOf2(value) {
+        return (value & (value - 1)) == 0;
+    }
+
+    const ioTex = loadTexture('images/iotexture.jpg');
+    const nebulaTex = loadTexture('images/nebulatexture.jpg');
+    const starsTex = loadTexture('images/stars.png');
+
+    // Timestamps and counters
+    let startTime = performance.now(); // used for iTime
+    let iFrame = 0;                    // counts frames
+
+    // Visual Mode State
+    let visualMode = 1; // Start in Ring Mode (1) by default as it's the "new hotness"
+    // Expose toggle function
+    window.toggleVisuals = function () {
+        visualMode = (visualMode === 0) ? 1 : 0;
+        console.log("Switched Visual Mode:", visualMode === 0 ? "Classic" : "Ring");
+        // Update button text if it exists
+        const btn = document.getElementById('modeToggleInfo');
+        if (btn) btn.textContent = visualMode === 0 ? "Mode: Classic" : "Mode: Ring";
+    };
+
+    // Render Function
+    function render() {
+        const timeNow = performance.now();
+        const iTime = (timeNow - startTime) * 0.001;
+
+        const swirlFactor = Math.min(smoothedFrequency * 0.02, 2.0); // up to 2.0
+        const colorFactor = Math.min(smoothedFrequency * 0.003, 0.5); // up to 0.5
+
+        // Prepare an object to pass to updateShaderUniforms:
+        const uniformData = {
+            smoothedFrequency,
+            bass,
+            midrange,
+            treble,
+            swirlFactor,
+            colorFactor,
+            uVisualMode: visualMode // Pass the mode
+        };
+
+        // Update Audio Texture
+        if (window.audioDataArray) {
+            gl.bindTexture(gl.TEXTURE_2D, audioTex);
+            gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, AUDIO_TEX_WIDTH, AUDIO_TEX_HEIGHT, gl.LUMINANCE, gl.UNSIGNED_BYTE, window.audioDataArray);
         }
-    };
 
-    image.onerror = function() {
-        console.error('Failed to load texture from URL:', url);
-    };
+        // === Pass A ===
+        gl.useProgram(progA);
+        updatePassUniforms(gl, progA, [BUFFER_WIDTH, BUFFER_HEIGHT, 1.0], iTime, [
+            { texture: noiseTex, uniformName: "iChannel0" },
+            { texture: currentA === 0 ? fboA1.tex : fboA0.tex, uniformName: "iChannel1" }
+        ]);
 
-    image.src = url;
+        // Pass the updated uniform data (includes swirlFactor & colorFactor):
+        updateShaderUniforms(gl, progA, uniformData);
+        // Also ensure uVisualMode is set for progA if we added it there (we did in BUFFER_A_FS)
+        let locModeA = gl.getUniformLocation(progA, "uVisualMode");
+        if (locModeA) gl.uniform1i(locModeA, visualMode);
 
-    return texture;
-}
 
-function isPowerOf2(value) {
-    return (value & (value - 1)) == 0;
-}
+        // Render to Buffer A
+        gl.bindFramebuffer(gl.FRAMEBUFFER, currentA === 0 ? fboA0.fbo : fboA1.fbo);
+        gl.viewport(0, 0, BUFFER_WIDTH, BUFFER_HEIGHT);
+        gl.clearColor(0, 0, 0, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
 
-const ioTex = loadTexture('images/iotexture.jpg');
-const nebulaTex = loadTexture('images/nebulatexture.jpg');
-const starsTex = loadTexture('images/stars.png');
+        gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
+        setupVertexAttrib(progA);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-// Timestamps and counters
-let startTime = performance.now(); // used for iTime
-let iFrame = 0;                    // counts frames
+        // === Pass B ===
+        gl.useProgram(progB);
+        updatePassUniforms(gl, progB, [BUFFER_WIDTH, BUFFER_HEIGHT, 1.0], iTime, [
+            { texture: currentA === 0 ? fboA0.tex : fboA1.tex, uniformName: "iChannel0" }
+        ]);
 
-// Render Function
-function render() {
-    const timeNow = performance.now();
-    const iTime = (timeNow - startTime) * 0.001;
+        updateShaderUniforms(gl, progB, uniformData);
 
-    const swirlFactor = Math.min(smoothedFrequency * 0.02, 2.0); // up to 2.0
-    const colorFactor = Math.min(smoothedFrequency * 0.003, 0.5); // up to 0.5
+        // Render to Buffer B
+        gl.bindFramebuffer(gl.FRAMEBUFFER, fboB.fbo);
+        gl.viewport(0, 0, BUFFER_WIDTH, BUFFER_HEIGHT);
+        gl.clearColor(0, 0, 0, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
 
-    // Prepare an object to pass to updateShaderUniforms:
-    const uniformData = {
-      smoothedFrequency,
-      bass,
-      midrange,
-      treble,
-      swirlFactor,
-      colorFactor
-    };
+        gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
+        setupVertexAttrib(progB);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-    // === Pass A ===
-    gl.useProgram(progA);
-    updatePassUniforms(gl, progA, [BUFFER_WIDTH, BUFFER_HEIGHT, 1.0], iTime, [
-        { texture: noiseTex, uniformName: "iChannel0" },
-        { texture: currentA === 0 ? fboA1.tex : fboA0.tex, uniformName: "iChannel1" }
-    ]);
-    
-    // Pass the updated uniform data (includes swirlFactor & colorFactor):
-    updateShaderUniforms(gl, progA, uniformData);
+        // === Final Pass ===
+        gl.useProgram(progFinal);
 
-    // Render to Buffer A
-    gl.bindFramebuffer(gl.FRAMEBUFFER, currentA === 0 ? fboA0.fbo : fboA1.fbo);
-    gl.viewport(0, 0, BUFFER_WIDTH, BUFFER_HEIGHT);
-    gl.clearColor(0, 0, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+        // Update bindings for combined shader:
+        // iChannel0: Planet (Buffer B)
+        // iChannel1: Nebula (Galaxy Background)
+        // iChannel2: Stars/Io (Noise source)
+        // iChannel3: Audio Texture (Luminance)
+        updatePassUniforms(gl, progFinal, [canvas.width, canvas.height, 1.0], iTime, [
+            { texture: fboB.tex, uniformName: "iChannel0" },
+            { texture: nebulaTex, uniformName: "iChannel1" },
+            { texture: ioTex, uniformName: "iChannel2" },
+            { texture: audioTex, uniformName: "iChannel3" },
+            { texture: starsTex, uniformName: "iChannel4" } // Added Stars explicitly for Classic Mode
+        ]);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
-    setupVertexAttrib(progA);
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+        updateShaderUniforms(gl, progFinal, uniformData);
+        // Also ensure uVisualMode is set for progFinal
+        let locModeFinal = gl.getUniformLocation(progFinal, "uVisualMode");
+        if (locModeFinal) gl.uniform1i(locModeFinal, visualMode);
 
-    // === Pass B ===
-    gl.useProgram(progB);
-    updatePassUniforms(gl, progB, [BUFFER_WIDTH, BUFFER_HEIGHT, 1.0], iTime, [
-        { texture: currentA === 0 ? fboA0.tex : fboA1.tex, uniformName: "iChannel0" }
-    ]);
-    
-    updateShaderUniforms(gl, progB, uniformData);
+        // Render Final to screen
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.clearColor(0, 0, 0, 1);
+        gl.clear(gl.COLOR_BUFFER_BIT);
 
-    // Render to Buffer B
-    gl.bindFramebuffer(gl.FRAMEBUFFER, fboB.fbo);
-    gl.viewport(0, 0, BUFFER_WIDTH, BUFFER_HEIGHT);
-    gl.clearColor(0, 0, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
+        setupVertexAttrib(progFinal);
+        gl.drawArrays(gl.TRIANGLES, 0, 6);
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
-    setupVertexAttrib(progB);
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
+        // Flip the double-buffer for A
+        currentA = 1 - currentA;
+        iFrame++;
 
-    // === Final Pass ===
-    gl.useProgram(progFinal);
-    updatePassUniforms(gl, progFinal, [canvas.width, canvas.height, 1.0], iTime, [
-        { texture: fboB.tex,  uniformName: "iChannel0" },
-        { texture: starsTex,  uniformName: "iChannel1" },
-        { texture: ioTex,     uniformName: "iChannel2" },
-        { texture: nebulaTex, uniformName: "iChannel3" }
-    ]);
-    
-    updateShaderUniforms(gl, progFinal, uniformData);
-
-    // Render Final to screen
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.clearColor(0, 0, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, quadVbo);
-    setupVertexAttrib(progFinal);
-    gl.drawArrays(gl.TRIANGLES, 0, 6);
-
-    // Flip the double-buffer for A
-    currentA = 1 - currentA;
-    iFrame++;
-
-    requestAnimationFrame(render);
-}
-render();
+        requestAnimationFrame(render);
+    }
+    render();
+})();
